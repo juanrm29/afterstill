@@ -1,0 +1,220 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
+
+interface Fragment {
+  id: string;
+  text: string;
+  source: string;
+  sourceId: string;
+}
+
+// Extract meaningful fragments from writings
+function extractFragments(
+  writings: Array<{ id: string; title: string; content: string }>
+): Fragment[] {
+  const fragments: Fragment[] = [];
+
+  writings.forEach((writing) => {
+    const sentences = writing.content
+      .replace(/\n+/g, " ")
+      .replace(/[#*_`>]/g, "") // Remove markdown
+      .split(/(?<=[.!?])\s+/)
+      .filter((s) => s.length > 40 && s.length < 160)
+      .filter((s) => {
+        // Filter for poetic/meaningful sentences
+        const hasDepth =
+          /\b(silence|time|memory|light|shadow|dream|heart|soul|breath|moment|echo|whisper|dawn|dusk|night|sky|rain|wind|sea|moon|star|sun|quiet|still|fade|lost|find|seek|wonder|between|beneath|beyond)\b/i.test(
+            s
+          );
+        const hasReflection =
+          /\b(perhaps|maybe|sometimes|often|always|never|once|still|yet|only|merely|within)\b/i.test(
+            s
+          );
+        return hasDepth || hasReflection;
+      });
+
+    sentences.slice(0, 2).forEach((text, i) => {
+      fragments.push({
+        id: `${writing.id}-frag-${i}`,
+        text: text.trim(),
+        source: writing.title,
+        sourceId: writing.id,
+      });
+    });
+  });
+
+  return fragments.slice(0, 12);
+}
+
+export default function FragmentPage() {
+  const [writings, setWritings] = useState<
+    Array<{ id: string; title: string; content: string }>
+  >([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/writings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setWritings(data);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const fragments = useMemo(() => extractFragments(writings), [writings]);
+
+  return (
+    <div className="min-h-screen bg-[#030304] text-white">
+      {/* Subtle ambient */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div
+          className="absolute w-[600px] h-[600px] rounded-full blur-[180px] opacity-[0.025]"
+          style={{
+            background: "radial-gradient(circle, #a78bfa, transparent 70%)",
+            left: "50%",
+            top: "40%",
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      </div>
+
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-8 py-8">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <Link
+            href="/"
+            className={`text-[11px] tracking-[0.3em] uppercase text-zinc-600 hover:text-zinc-400 transition-colors duration-500 ${
+              isLoaded ? "animate-fade-in" : "opacity-0"
+            }`}
+          >
+            ← Back
+          </Link>
+          <h1
+            className={`text-[11px] tracking-[0.4em] uppercase text-zinc-500 ${
+              isLoaded ? "animate-fade-in" : "opacity-0"
+            }`}
+          >
+            Fragments
+          </h1>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="pt-32 pb-24 px-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Intro */}
+          <div className="text-center mb-16">
+            <p
+              className={`text-zinc-500 text-[15px] leading-relaxed max-w-md mx-auto ${
+                isLoaded ? "animate-fade-in" : "opacity-0"
+              }`}
+              style={{ fontFamily: "var(--font-cormorant), serif" }}
+            >
+              Scattered echoes and extracted thoughts,
+              <br />
+              <span className="text-zinc-600">pieces that wanted to be remembered.</span>
+            </p>
+          </div>
+
+          {/* Fragments Grid */}
+          {fragments.length === 0 && isLoaded ? (
+            <div className="text-center py-24">
+              <div className="w-14 h-14 mx-auto mb-6 rounded-full border border-zinc-800/50 flex items-center justify-center">
+                <span className="text-xl opacity-30">✦</span>
+              </div>
+              <p className="text-zinc-600 text-sm">No fragments yet.</p>
+              <p className="text-zinc-700 text-xs mt-2">
+                Fragments appear as writings are published.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {fragments.map((fragment, index) => {
+                const isHovered = hoveredId === fragment.id;
+
+                return (
+                  <div
+                    key={fragment.id}
+                    className={`group transition-all duration-500 ${
+                      isLoaded
+                        ? "opacity-100 translate-y-0"
+                        : "opacity-0 translate-y-4"
+                    }`}
+                    style={{ transitionDelay: `${index * 60}ms` }}
+                    onMouseEnter={() => setHoveredId(fragment.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                  >
+                    <div
+                      className={`relative p-6 rounded-xl border transition-all duration-400 h-full ${
+                        isHovered
+                          ? "bg-zinc-900/70 border-zinc-700/50 -translate-y-0.5"
+                          : "bg-zinc-900/20 border-zinc-800/30"
+                      }`}
+                    >
+                      {/* Quote decoration */}
+                      <span
+                        className={`absolute -top-2 left-5 text-4xl leading-none transition-colors duration-400 ${
+                          isHovered ? "text-purple-500/20" : "text-zinc-800/40"
+                        }`}
+                      >
+                        "
+                      </span>
+
+                      {/* Fragment text */}
+                      <p
+                        className={`text-[15px] leading-[1.9] pt-3 transition-colors duration-400 ${
+                          isHovered ? "text-zinc-300" : "text-zinc-500"
+                        }`}
+                        style={{ fontFamily: "var(--font-cormorant), serif" }}
+                      >
+                        {fragment.text}
+                      </p>
+
+                      {/* Source link */}
+                      <Link
+                        href={`/reading/${fragment.sourceId}`}
+                        className={`mt-5 inline-flex items-center gap-2 text-[10px] transition-all duration-400 ${
+                          isHovered
+                            ? "text-zinc-500 opacity-100"
+                            : "text-zinc-700 opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
+                        <span className="w-5 h-px bg-zinc-700" />
+                        <span className="uppercase tracking-[0.15em]">
+                          {fragment.source}
+                        </span>
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Footer decoration */}
+      <div className="fixed bottom-8 left-0 right-0 flex justify-center pointer-events-none">
+        <div
+          className={`flex items-center gap-3 text-zinc-800 text-[10px] tracking-[0.3em] uppercase ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          } transition-opacity duration-1000 delay-500`}
+        >
+          <span className="w-8 h-px bg-zinc-800/50" />
+          <span>{fragments.length} fragments</span>
+          <span className="w-8 h-px bg-zinc-800/50" />
+        </div>
+      </div>
+    </div>
+  );
+}

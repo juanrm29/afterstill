@@ -1,0 +1,227 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String        @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role          @default(ADMIN)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  accounts      Account[]
+  activityLogs  ActivityLog[]
+  sessions      Session[]
+  writings      Writing[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Writing {
+  id             String           @id @default(cuid())
+  slug           String           @unique
+  title          String
+  content        String
+  excerpt        String?
+  status         WritingStatus    @default(DRAFT)
+  publishedAt    DateTime?
+  scheduledAt    DateTime?
+  wordCount      Int              @default(0)
+  readingTime    Int              @default(0)
+  radioFrequency Float?
+  isNightOnly    Boolean          @default(false)
+  isFeatured     Boolean          @default(false)
+  authorId       String
+  collectionId   String?
+  viewCount      Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  tags           TagsOnWritings[]
+  author         User             @relation(fields: [authorId], references: [id])
+  collection     Collection?      @relation(fields: [collectionId], references: [id])
+  versions       WritingVersion[]
+
+  @@index([status, publishedAt])
+  @@index([slug])
+}
+
+model WritingVersion {
+  id        String   @id @default(cuid())
+  writingId String
+  title     String
+  content   String
+  excerpt   String?
+  createdAt DateTime @default(now())
+  writing   Writing  @relation(fields: [writingId], references: [id], onDelete: Cascade)
+
+  @@index([writingId, createdAt])
+}
+
+model Tag {
+  id        String           @id @default(cuid())
+  name      String           @unique
+  slug      String           @unique
+  color     String?
+  createdAt DateTime         @default(now())
+  writings  TagsOnWritings[]
+}
+
+model TagsOnWritings {
+  writingId String
+  tagId     String
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  writing   Writing @relation(fields: [writingId], references: [id], onDelete: Cascade)
+
+  @@id([writingId, tagId])
+}
+
+model Collection {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  coverImage  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  writings    Writing[]
+}
+
+model PageView {
+  id           String   @id @default(cuid())
+  path         String
+  writingId    String?
+  visitorId    String?
+  referrer     String?
+  userAgent    String?
+  country      String?
+  readProgress Int?     @default(0)
+  timeOnPage   Int?
+  createdAt    DateTime @default(now())
+
+  @@index([path, createdAt])
+  @@index([writingId, createdAt])
+  @@index([visitorId])
+}
+
+model Reflection {
+  id        String   @id @default(cuid())
+  writingId String
+  visitorId String
+  content   String
+  mood      String?
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([writingId, createdAt])
+  @@index([visitorId])
+}
+
+model DailyStats {
+  id              String   @id @default(cuid())
+  date            DateTime @unique @db.Date
+  totalViews      Int      @default(0)
+  uniqueVisitors  Int      @default(0)
+  avgReadTime     Int      @default(0)
+  avgReadProgress Int      @default(0)
+  topWritingId    String?
+  topReferrer     String?
+  createdAt       DateTime @default(now())
+
+  @@index([date])
+}
+
+model SiteSettings {
+  id                   String   @id @default("main")
+  siteName             String   @default("Afterstill")
+  siteTagline          String   @default("A deck of instruments")
+  siteDescription      String?
+  oracleEnabled        Boolean  @default(true)
+  radioEnabled         Boolean  @default(true)
+  catalogEnabled       Boolean  @default(true)
+  candleEnabled        Boolean  @default(true)
+  nightStartHour       Int      @default(20)
+  nightEndHour         Int      @default(5)
+  twitterUrl           String?
+  githubUrl            String?
+  emailContact         String?
+  updatedAt            DateTime @updatedAt
+  aboutEstYear         String   @default("2024")
+  aboutPrivacyNote     String   @default("No tracking pixels. No invasive analytics. Your reading experience is respected.")
+  aboutPronunciation   String   @default("/ ˈæf.tɚ.stɪl / — the quiet that follows")
+  aboutQuote           String   @default("In the space between doing and not-doing, something waits to be noticed.")
+  aboutSection1Content String   @default("Afterstill is a sanctuary for words that needed time to settle. Not a blog, not a journal—more like a collection of quiet observations gathered from the margins of experience.")
+  aboutSection1Title   String   @default("The Space")
+  aboutSection2Content String   @default("What happens when motion stops? There's a stillness that follows—the afterstill. It's where things become clearer. Not because they've changed, but because we've finally stopped to look.")
+  aboutSection2Title   String   @default("The Name")
+  aboutSection3Content String   @default("Each piece begins as a fragment—an image, a question, a feeling that wouldn't dissolve. They're not answers, but attempts at attention. Attempts to stay with something long enough for it to reveal its shape.")
+  aboutSection3Title   String   @default("The Practice")
+  aboutSection4Content String   @default("Built with intention—every animation, every spacing, every interaction considered. The design serves the words, creating a space where reading feels like breathing.")
+  aboutSection4Title   String   @default("The Craft")
+  instagramUrl         String?
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([entity, entityId])
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum WritingStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}

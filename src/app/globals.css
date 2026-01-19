@@ -1,26 +1,758 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Abyssal void - deep, mysterious darkness */
+  --bg: #030304;
+  --bg-elevated: #080809;
+  --fg: #a1a1aa;
+  --fg-muted: #5a5a64;
+  --muted: #2a2a32;
+  --subtle: #101014;
+  --accent: #3d3d48;
+  
+  /* Ethereal void tones - deep obsidian undertones */
+  --glow-cold: rgba(40, 44, 52, 0.03);
+  --glow-blue: rgba(30, 35, 45, 0.04);
+  --glow-soft: rgba(100, 100, 110, 0.015);
+  
+  /* Card surfaces - obsidian glass */
+  --card-bg: rgba(8, 8, 12, 0.7);
+  --card-border: rgba(28, 28, 36, 0.3);
+  --card-hover: rgba(32, 32, 40, 0.4);
+  
+  /* Mystical accents - cold, ethereal */
+  --cold-slate: #363646;
+  --cold-gray: #4a4a5a;
+  --cold-zinc: #3a3a48;
+  --cold-blue: #252535;
+  
+  /* Spacing scale (golden ratio influenced) */
+  --space-xs: 0.382rem;
+  --space-sm: 0.618rem;
+  --space-md: 1rem;
+  --space-lg: 1.618rem;
+  --space-xl: 2.618rem;
+  --space-2xl: 4.236rem;
+  --space-3xl: 6.854rem;
+  
+  /* Stoic radius - clean, minimal */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-cormorant);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--fg);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+  font-feature-settings: "liga" 1, "calt" 1, "kern" 1;
+  text-rendering: optimizeLegibility;
+  line-height: 1.6;
+}
+
+/* Typography - Editorial precision */
+@layer base {
+  h1 {
+    font-family: var(--font-cormorant), 'Times New Roman', serif;
+    font-weight: 300;
+    letter-spacing: -0.035em;
+    line-height: 0.92;
+  }
+  
+  h2 {
+    font-family: var(--font-cormorant), 'Times New Roman', serif;
+    font-weight: 300;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
+  
+  h3 {
+    font-family: var(--font-cormorant), 'Times New Roman', serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  
+  /* Refined paragraph rhythm */
+  p {
+    line-height: 1.75;
+    hanging-punctuation: first last;
+  }
+  
+  /* Smart quotes and proper punctuation */
+  blockquote {
+    font-style: italic;
+    quotes: "\201C" "\201D" "\2018" "\2019";
+  }
+}
+
+/* Cursor glow - barely there, just a hint of presence */
+.cursor-glow {
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.15;
+  background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 50%);
+  transform: translate(-50%, -50%);
+  transition: opacity 1.2s ease;
+  will-change: transform;
+}
+
+/* Smooth reveal - haunting emergence */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+    filter: blur(12px);
+  }
+  60% {
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Staggered text reveal for headlines - like whispers materializing */
+@keyframes text-emerge {
+  from {
+    opacity: 0;
+    transform: translateY(120%) rotateX(40deg);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
+    filter: blur(0);
+  }
+}
+
+/* Intelligent fade for secondary content */
+@keyframes gentle-appear {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* Living pulse - like a heartbeat in the void */
+@keyframes stellar-pulse {
+  0%, 100% { 
+    opacity: 0.4;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255,255,255,0.1);
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.15);
+    box-shadow: 0 0 20px 4px rgba(255,255,255,0.05);
+  }
+}
+
+/* Breathing glow for discovered nodes */
+@keyframes node-breathe {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 0 rgba(147, 197, 253, 0),
+      inset 0 0 8px rgba(255,255,255,0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 25px 8px rgba(147, 197, 253, 0.15),
+      inset 0 0 12px rgba(255,255,255,0.2);
+  }
+}
+
+/* Edge shimmer - like neural pathways lighting up */
+@keyframes edge-shimmer {
+  0% { stroke-dashoffset: 100; opacity: 0.1; }
+  50% { opacity: 0.4; }
+  100% { stroke-dashoffset: 0; opacity: 0.1; }
+}
+
+/* Scanning line for encrypted content */
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(200%); }
+}
+
+/* Animated static noise */
+@keyframes static {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-1%, -1%); }
+  20% { transform: translate(1%, 1%); }
+  30% { transform: translate(-2%, 0%); }
+  40% { transform: translate(0%, 2%); }
+  50% { transform: translate(1%, -1%); }
+  60% { transform: translate(-1%, 2%); }
+  70% { transform: translate(2%, 1%); }
+  80% { transform: translate(-2%, -2%); }
+  90% { transform: translate(1%, 0%); }
+}
+
+.animate-static {
+  animation: static 0.5s steps(10) infinite;
+}
+
+/* Scanline sweep effect */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.animate-scanline {
+  animation: scanline 8s linear infinite;
+}
+
+/* Slow spin for scanner */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2s linear infinite;
+}
+
+/* Cursor blink */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 0.8s step-end infinite;
+}
+
+/* Star twinkle for telescope */
+@keyframes twinkle {
+  0%, 100% { 
+    opacity: 0.4; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.3);
+  }
+}
+
+/* #8 Heartbeat pulse for instruments - like living thing */
+@keyframes heartbeat {
+  0%, 100% { 
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  14% { 
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+  28% { 
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  42% { 
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+  56% { 
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 2s ease-in-out infinite;
+}
+
+/* #3 Glitch effect */
+@keyframes glitch-text {
+  0%, 100% { 
+    transform: translate(0); 
+    text-shadow: none;
+  }
+  25% { 
+    transform: translate(-2px, 1px); 
+    text-shadow: 2px 0 #ff0000, -2px 0 #00ffff;
+  }
+  50% { 
+    transform: translate(2px, -1px); 
+    text-shadow: -2px 0 #ff0000, 2px 0 #00ffff;
+  }
+  75% { 
+    transform: translate(-1px, -1px); 
+    text-shadow: 1px 0 #ff0000, -1px 0 #00ffff;
+  }
+}
+
+.glitch-active {
+  animation: glitch-text 0.15s steps(2) infinite;
+}
+
+/* Flicker effect for mysterious elements */
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.8; }
+  94% { opacity: 1; }
+  96% { opacity: 0.9; }
+  97% { opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes expandLine {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Character-by-character reveal */
+@keyframes charReveal {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .animate-reveal {
+    animation: reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+  
+  .animate-fade {
+    animation: fadeIn 0.8s ease forwards;
+    opacity: 0;
+  }
+  
+  .animate-slide {
+    animation: slideIn 0.8s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+    opacity: 0;
+  }
+  
+  .animate-emerge {
+    animation: text-emerge 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform-style: preserve-3d;
+  }
+  
+  .animate-gentle {
+    animation: gentle-appear 0.7s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+    opacity: 0;
+  }
+  
+  .animate-stellar {
+    animation: stellar-pulse 4s ease-in-out infinite;
+  }
+  
+  .animate-node-breathe {
+    animation: node-breathe 3s ease-in-out infinite;
+  }
+
+  .animate-breathe {
+    animation: breathe 5s ease-in-out infinite;
+  }
+
+  .animate-line {
+    animation: expandLine 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: left;
+  }
+
+  /* Refined stagger delays - slower, more mysterious */
+  .delay-1 { animation-delay: 0.2s; }
+  .delay-2 { animation-delay: 0.35s; }
+  .delay-3 { animation-delay: 0.55s; }
+  .delay-4 { animation-delay: 0.8s; }
+  .delay-5 { animation-delay: 1.1s; }
+  .delay-6 { animation-delay: 1.45s; }
+  .delay-7 { animation-delay: 1.85s; }
+}
+
+/* Reading progress bar */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--fg), transparent);
+  transform-origin: left;
+  z-index: 100;
+}
+
+/* Magnetic button effect */
+.magnetic {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Text mask reveal */
+.text-reveal {
+  overflow: hidden;
+}
+
+.text-reveal span {
+  display: inline-block;
+  animation: charReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* Subtle hover lift - intelligent response */
+.hover-lift {
+  transition: 
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 8px 30px -10px rgba(0, 0, 0, 0.5),
+    0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Surface elevation on interaction */
+.hover-glow {
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.04), transparent 40%);
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.hover-glow:hover::before {
+  opacity: 1;
+}
+
+/* Line through on hover */
+.hover-line {
+  position: relative;
+}
+
+.hover-line::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-line:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Orbital floating animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes orbit-slow {
+  from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes draw-line {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-orbit {
+  animation: orbit-slow 60s linear infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s ease-in-out infinite;
+}
+
+/* Orbital nodes */
+.orbital-node {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.orbital-node:hover {
+  z-index: 100;
+}
+
+/* Connection lines */
+.connection-line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw-line 2s ease-out forwards;
+}
+
+/* Cursor crosshair */
+.cursor-crosshair {
+  cursor: crosshair;
+}
+
+/* Typewriter cursor */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.typewriter-cursor {
+  animation: blink 1s step-end infinite;
+}
+
+/* Smooth scale on hover */
+.hover-scale {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+/* Fade up animation */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out forwards;
+}
+
+/* Portal animations */
+@keyframes portal-expand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+  20% {
+    width: 20px;
+    height: 20px;
+    opacity: 1;
+  }
+  100% {
+    width: 300vw;
+    height: 300vw;
+    opacity: 1;
+  }
+}
+
+@keyframes portal-text {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes whisper {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  50% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+}
+
+.animate-portal-expand {
+  animation: portal-expand 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-portal-text {
+  animation: portal-text 1.2s ease-out forwards;
+}
+
+.animate-whisper {
+  animation: whisper 2s ease-in-out forwards;
+}
+
+/* Conduit shake effect - when HP shakes, desktop shakes */
+@keyframes conduitShake {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  10% { transform: translateX(-4px) translateY(2px); }
+  20% { transform: translateX(4px) translateY(-2px); }
+  30% { transform: translateX(-3px) translateY(1px); }
+  40% { transform: translateX(3px) translateY(-1px); }
+  50% { transform: translateX(-2px) translateY(2px); }
+  60% { transform: translateX(2px) translateY(-2px); }
+  70% { transform: translateX(-1px) translateY(1px); }
+  80% { transform: translateX(1px) translateY(-1px); }
+  90% { transform: translateX(-1px) translateY(0); }
+}
+
+.animate-conduit-shake {
+  animation: conduitShake 0.6s ease-in-out;
+}
+
+/* ═══════════════════════════════════════════
+   CONDUIT SHAKE - Remote device shake effect
+═══════════════════════════════════════════ */
+@keyframes conduit-shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-8px) rotate(-0.5deg); }
+  20% { transform: translateX(8px) rotate(0.5deg); }
+  30% { transform: translateX(-6px) rotate(-0.3deg); }
+  40% { transform: translateX(6px) rotate(0.3deg); }
+  50% { transform: translateX(-4px) rotate(-0.2deg); }
+  60% { transform: translateX(4px) rotate(0.2deg); }
+  70% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+  90% { transform: translateX(-1px); }
+}
+
+.animate-conduit-shake {
+  animation: conduit-shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* ═══════════════════════════════════════════
+   FADE IN - Success message animation
+═══════════════════════════════════════════ */
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(-4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+/* ═══════════════════════════════════════════
+   NEBULA BACKGROUND - Floating cosmic clouds
+═══════════════════════════════════════════ */
+@keyframes nebulaFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -20px) scale(1.05); }
+  50% { transform: translate(-20px, 30px) scale(0.95); }
+  75% { transform: translate(20px, 20px) scale(1.02); }
+}
+
+@keyframes nebulaFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 20px) scale(1.03); }
+  66% { transform: translate(30px, -30px) scale(0.97); }
+}
+
+@keyframes nebulaFloat3 {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  20% { transform: translate(calc(-50% + 25px), calc(-50% - 15px)) scale(1.04); }
+  40% { transform: translate(calc(-50% - 20px), calc(-50% + 25px)) scale(0.96); }
+  60% { transform: translate(calc(-50% + 15px), calc(-50% + 10px)) scale(1.02); }
+  80% { transform: translate(calc(-50% - 10px), calc(-50% - 20px)) scale(0.98); }
+}
+
+@keyframes nebulaFloat4 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-25px, 25px); }
+}
+
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.5; }
 }
