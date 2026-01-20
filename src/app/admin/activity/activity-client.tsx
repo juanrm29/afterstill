@@ -141,11 +141,11 @@ export default function ActivityClient({ logs }: Props) {
                       {log.action}
                     </span>
                     <span className="text-zinc-400 text-sm">{log.entity}</span>
-                    {log.details?.title && (
+                    {log.details && typeof log.details === 'object' && 'title' in log.details && (
                       <>
                         <span className="text-zinc-700">•</span>
                         <span className="text-zinc-500 text-sm truncate">
-                          "{log.details.title as string}"
+                          &quot;{String(log.details.title)}&quot;
                         </span>
                       </>
                     )}
