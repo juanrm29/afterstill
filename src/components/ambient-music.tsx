@@ -1,49 +1,51 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
-// Soft, melancholic ambient playlist - royalty free / creative commons
-// Using Pixabay royalty-free ambient music
+// Soft, melancholic ambient playlist - using reliable CDN sources
+// These are royalty-free ambient tracks from reliable sources
 const playlist = [
   {
     id: 1,
-    title: "Ethereal Melancholy",
-    artist: "Ambient Dreams",
-    url: "https://cdn.pixabay.com/audio/2024/11/29/audio_cb54f0fdc5.mp3", // Soft ambient piano
+    title: "Floating Dreams",
+    artist: "Ambient Collective",
+    // Ambient piano from SoundHelix (reliable test audio)
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
   },
   {
     id: 2,
-    title: "Solitude",
+    title: "Gentle Stillness",
     artist: "The Quiet Hours",
-    url: "https://cdn.pixabay.com/audio/2024/02/02/audio_3f07fe0a53.mp3", // Melancholic ambient
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
   },
   {
     id: 3,
-    title: "Whispers in Rain",
+    title: "Whispered Memories",
     artist: "Afterstill",
-    url: "https://cdn.pixabay.com/audio/2022/10/25/audio_552e51e6bf.mp3", // Soft atmospheric
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
   },
   {
     id: 4,
-    title: "Gentle Night",
+    title: "Evening Calm",
     artist: "Twilight Echoes",
-    url: "https://cdn.pixabay.com/audio/2024/01/10/audio_d4e5b7c1c1.mp3", // Calm ambient
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
   },
   {
     id: 5,
-    title: "Memory Fades",
-    artist: "Silent Reverie",
-    url: "https://cdn.pixabay.com/audio/2023/10/30/audio_952aca2e12.mp3", // Nostalgic ambient
+    title: "Silent Reflection",
+    artist: "Ambient Dreams",
+    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
   },
 ];
 
 export default function AmbientMusic() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(0);
-  const [volume, setVolume] = useState(0.3);
+  const [volume, setVolume] = useState(0.15); // Lower default volume for ambient
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize audio only on client
@@ -53,7 +55,8 @@ export default function AmbientMusic() {
     const audio = new Audio();
     audio.volume = volume;
     audio.loop = false;
-    audio.preload = "metadata";
+    audio.preload = "auto";
+    audio.crossOrigin = "anonymous";
     audioRef.current = audio;
     
     const handleEnded = () => {
@@ -62,23 +65,30 @@ export default function AmbientMusic() {
     
     const handleCanPlay = () => {
       setIsLoaded(true);
+      setLoadError(false);
     };
     
-    const handleError = (e: ErrorEvent) => {
-      console.log("Audio load error - using placeholder URL");
+    const handleError = () => {
+      console.log("Audio load error, trying next track...");
+      setLoadError(true);
+      // Try next track on error
+      setTimeout(() => {
+        setCurrentTrack((prev) => (prev + 1) % playlist.length);
+      }, 1000);
     };
     
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("canplaythrough", handleCanPlay);
-    audio.addEventListener("error", handleError as any);
+    audio.addEventListener("error", handleError);
     
     // Set initial source
     audio.src = playlist[currentTrack].url;
+    audio.load();
 
     return () => {
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("canplaythrough", handleCanPlay);
-      audio.removeEventListener("error", handleError as any);
+      audio.removeEventListener("error", handleError);
       audio.pause();
       audio.src = "";
       audioRef.current = null;
@@ -88,14 +98,19 @@ export default function AmbientMusic() {
   // Handle track change
   useEffect(() => {
     if (audioRef.current && hasInteracted) {
+      setIsLoaded(false);
       audioRef.current.src = playlist[currentTrack].url;
+      audioRef.current.load();
       if (isPlaying) {
-        audioRef.current.play().catch((err) => {
-          console.log("Playback prevented:", err.message);
-        });
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.log("Playback prevented:", err.message);
+          });
+        }
       }
     }
-  }, [currentTrack, hasInteracted]);
+  }, [currentTrack, hasInteracted, isPlaying]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -103,18 +118,33 @@ export default function AmbientMusic() {
     }
   }, [volume]);
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     if (!hasInteracted) setHasInteracted(true);
     
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
+        setIsPlaying(false);
       } else {
-        audioRef.current.play().catch(() => {});
+        // Ensure the audio is loaded before playing
+        if (!audioRef.current.src || audioRef.current.src === "") {
+          audioRef.current.src = playlist[currentTrack].url;
+          audioRef.current.load();
+        }
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+            })
+            .catch((err) => {
+              console.log("Play failed:", err.message);
+              setIsPlaying(false);
+            });
+        }
       }
-      setIsPlaying(!isPlaying);
     }
-  };
+  }, [hasInteracted, isPlaying, currentTrack]);
 
   const nextTrack = () => {
     setCurrentTrack((prev) => (prev + 1) % playlist.length);

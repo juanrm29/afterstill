@@ -28,7 +28,7 @@ function parseHighlights(text: string) {
   const parts = text.split(/\*\*(.*?)\*\*/g);
   return parts.map((part, i) => 
     i % 2 === 1 
-      ? <span key={i} className="text-foreground/70">{part}</span>
+      ? <span key={i} className="text-purple-300">{part}</span>
       : part
   );
 }
@@ -94,7 +94,13 @@ export default function AboutPage() {
   ].filter(Boolean) as { name: string; url: string }[];
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#0d0d14] to-[#0a0a0f] text-foreground relative">
+      {/* Subtle ambient background glow */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-violet-400/5 rounded-full blur-[100px]" />
+      </div>
+      
       {/* Ambient cursor glow */}
       <div
         className="cursor-glow"
@@ -180,15 +186,15 @@ export default function AboutPage() {
                 className={`${isLoaded ? `animate-reveal delay-${index + 1}` : "opacity-0"}`}
               >
                 <div className="flex items-center gap-4 mb-5">
-                  <span className="text-[10px] text-muted/30 tracking-[0.3em] uppercase">
+                  <span className="text-[10px] text-purple-400/60 tracking-[0.3em] uppercase">
                     {section.num}
                   </span>
-                  <span className="h-px flex-1 bg-foreground/[0.06]" />
+                  <span className="h-px flex-1 bg-purple-500/20" />
                 </div>
-                <h2 className="text-[18px] text-foreground/90 mb-4 font-light">
+                <h2 className="text-[18px] text-foreground mb-4 font-light">
                   {section.title}
                 </h2>
-                <p className="text-[16px] leading-[2] text-muted/60">
+                <p className="text-[16px] leading-[2] text-zinc-400">
                   {parseHighlights(section.content)}
                 </p>
               </section>
@@ -201,9 +207,9 @@ export default function AboutPage() {
               isLoaded ? "animate-reveal delay-4" : "opacity-0"
             }`}
           >
-            <span className="h-px w-16 bg-foreground/[0.06]" />
-            <span className="text-muted/30 text-lg">✦</span>
-            <span className="h-px w-16 bg-foreground/[0.06]" />
+            <span className="h-px w-16 bg-purple-500/30" />
+            <span className="text-purple-400/60 text-lg">✦</span>
+            <span className="h-px w-16 bg-purple-500/30" />
           </div>
 
           {/* Philosophy quote */}
@@ -213,7 +219,7 @@ export default function AboutPage() {
             }`}
           >
             <p
-              className="text-[20px] leading-[1.9] text-muted/50 italic"
+              className="text-[20px] leading-[1.9] text-zinc-300/80 italic"
               style={{ fontFamily: "var(--font-cormorant), serif" }}
             >
               &ldquo;{settings.aboutQuote}&rdquo;
@@ -222,17 +228,17 @@ export default function AboutPage() {
 
           {/* Footer info */}
           <div
-            className={`mt-24 pt-12 border-t border-foreground/[0.04] ${
+            className={`mt-24 pt-12 border-t border-purple-500/20 ${
               isLoaded ? "animate-reveal delay-5" : "opacity-0"
             }`}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Privacy note */}
               <div>
-                <h3 className="text-[11px] tracking-[0.2em] uppercase text-muted/40 mb-3">
+                <h3 className="text-[11px] tracking-[0.2em] uppercase text-purple-400/60 mb-3">
                   Privacy
                 </h3>
-                <p className="text-[13px] text-muted/50 leading-[1.8]">
+                <p className="text-[13px] text-zinc-400 leading-[1.8]">
                   {settings.aboutPrivacyNote.split(". ").map((sentence, i, arr) => (
                     <span key={i}>
                       {sentence}{i < arr.length - 1 ? "." : ""}{i < arr.length - 1 && <br />}
@@ -244,7 +250,7 @@ export default function AboutPage() {
               {/* Connect */}
               {socialLinks.length > 0 && (
                 <div>
-                  <h3 className="text-[11px] tracking-[0.2em] uppercase text-muted/40 mb-3">
+                  <h3 className="text-[11px] tracking-[0.2em] uppercase text-purple-400/60 mb-3">
                     Connect
                   </h3>
                   <div className="flex gap-6">
@@ -254,7 +260,7 @@ export default function AboutPage() {
                         href={link.url}
                         target={link.url.startsWith("mailto:") ? undefined : "_blank"}
                         rel={link.url.startsWith("mailto:") ? undefined : "noopener noreferrer"}
-                        className="text-[13px] text-muted/50 hover:text-foreground/70 transition-colors"
+                        className="text-[13px] text-zinc-400 hover:text-purple-300 transition-colors"
                       >
                         {link.name}
                       </a>
@@ -266,7 +272,7 @@ export default function AboutPage() {
 
             {/* Year mark */}
             <div className="mt-12 text-center">
-              <span className="text-[11px] tracking-[0.3em] text-muted/25 uppercase">
+              <span className="text-[11px] tracking-[0.3em] text-zinc-500 uppercase">
                 Est. {settings.aboutEstYear}
               </span>
             </div>
