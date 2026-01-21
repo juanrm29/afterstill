@@ -3,55 +3,83 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 
+interface Writing {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  excerpt: string;
+}
+
 interface Fragment {
   id: string;
   text: string;
   source: string;
   sourceId: string;
+  date: string;
 }
 
-// Extract meaningful fragments from writings
-function extractFragments(
-  writings: Array<{ id: string; title: string; content: string }>
-): Fragment[] {
+// Extract meaningful fragments from writings (sorted by newest first)
+function extractFragments(writings: Writing[]): Fragment[] {
   const fragments: Fragment[] = [];
 
-  writings.forEach((writing) => {
+  // Sort by newest first
+  const sortedWritings = [...writings].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  sortedWritings.forEach((writing) => {
     const sentences = writing.content
       .replace(/\n+/g, " ")
       .replace(/[#*_`>]/g, "") // Remove markdown
       .split(/(?<=[.!?])\s+/)
-      .filter((s) => s.length > 40 && s.length < 160)
-      .filter((s) => {
-        // Filter for poetic/meaningful sentences
-        const hasDepth =
-          /\b(silence|time|memory|light|shadow|dream|heart|soul|breath|moment|echo|whisper|dawn|dusk|night|sky|rain|wind|sea|moon|star|sun|quiet|still|fade|lost|find|seek|wonder|between|beneath|beyond)\b/i.test(
-            s
-          );
-        const hasReflection =
-          /\b(perhaps|maybe|sometimes|often|always|never|once|still|yet|only|merely|within)\b/i.test(
-            s
-          );
-        return hasDepth || hasReflection;
-      });
+      .filter((s) => s.trim().length > 30 && s.trim().length < 200);
 
-    sentences.slice(0, 2).forEach((text, i) => {
+    // Get the best sentences - prioritize poetic ones, but include others too
+    const poeticSentences = sentences.filter((s) => {
+      const hasDepth =
+        /\b(silence|time|memory|light|shadow|dream|heart|soul|breath|moment|echo|whisper|dawn|dusk|night|sky|rain|wind|sea|moon|star|sun|quiet|still|fade|lost|find|seek|wonder|between|beneath|beyond|words|thought|feel|remember|forget)\b/i.test(
+          s
+        );
+      const hasReflection =
+        /\b(perhaps|maybe|sometimes|often|always|never|once|still|yet|only|merely|within|we|I|you)\b/i.test(
+          s
+        );
+      return hasDepth || hasReflection;
+    });
+
+    // Use poetic sentences first, then fallback to any sentence
+    const selectedSentences = poeticSentences.length > 0 
+      ? poeticSentences.slice(0, 2)
+      : sentences.slice(0, 2);
+
+    selectedSentences.forEach((text, i) => {
       fragments.push({
         id: `${writing.id}-frag-${i}`,
         text: text.trim(),
         source: writing.title,
         sourceId: writing.id,
+        date: writing.date,
       });
     });
+
+    // If no sentences found, use excerpt
+    if (selectedSentences.length === 0 && writing.excerpt) {
+      fragments.push({
+        id: `${writing.id}-frag-excerpt`,
+        text: writing.excerpt.trim(),
+        source: writing.title,
+        sourceId: writing.id,
+        date: writing.date,
+      });
+    }
   });
 
-  return fragments.slice(0, 12);
+  return fragments.slice(0, 16); // Show more fragments
 }
 
 export default function FragmentPage() {
-  const [writings, setWritings] = useState<
-    Array<{ id: string; title: string; content: string }>
-  >([]);
+  const [writings, setWritings] = useState<Writing[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -180,20 +208,32 @@ export default function FragmentPage() {
                         {fragment.text}
                       </p>
 
-                      {/* Source link */}
-                      <Link
-                        href={`/reading/${fragment.sourceId}`}
-                        className={`mt-5 inline-flex items-center gap-2 text-[10px] transition-all duration-400 ${
-                          isHovered
-                            ? "text-zinc-500 opacity-100"
-                            : "text-zinc-700 opacity-0 group-hover:opacity-100"
-                        }`}
-                      >
-                        <span className="w-5 h-px bg-zinc-700" />
-                        <span className="uppercase tracking-[0.15em]">
-                          {fragment.source}
+                      {/* Source link with date */}
+                      <div className="mt-5 flex items-center justify-between">
+                        <Link
+                          href={`/reading/${fragment.sourceId}`}
+                          className={`inline-flex items-center gap-2 text-[10px] transition-all duration-400 ${
+                            isHovered
+                              ? "text-zinc-500 opacity-100"
+                              : "text-zinc-700 opacity-0 group-hover:opacity-100"
+                          }`}
+                        >
+                          <span className="w-5 h-px bg-zinc-700" />
+                          <span className="uppercase tracking-[0.15em]">
+                            {fragment.source}
+                          </span>
+                        </Link>
+                        <span
+                          className={`text-[9px] tracking-wider transition-all duration-400 ${
+                            isHovered ? "text-zinc-600" : "text-zinc-800"
+                          }`}
+                        >
+                          {new Date(fragment.date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
                         </span>
-                      </Link>
+                      </div>
                     </div>
                   </div>
                 );

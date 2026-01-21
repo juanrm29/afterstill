@@ -2,25 +2,38 @@
 
 import { useState, useRef, useEffect } from "react";
 
-// Melancholic ambient playlist - royalty free / creative commons
+// Soft, melancholic ambient playlist - royalty free / creative commons
+// Using Pixabay royalty-free ambient music
 const playlist = [
   {
     id: 1,
-    title: "Weightless",
-    artist: "Marconi Union",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // Placeholder - replace with actual
+    title: "Ethereal Melancholy",
+    artist: "Ambient Dreams",
+    url: "https://cdn.pixabay.com/audio/2024/11/29/audio_cb54f0fdc5.mp3", // Soft ambient piano
   },
   {
     id: 2,
-    title: "Nocturne",
-    artist: "The Archive",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    title: "Solitude",
+    artist: "The Quiet Hours",
+    url: "https://cdn.pixabay.com/audio/2024/02/02/audio_3f07fe0a53.mp3", // Melancholic ambient
   },
   {
     id: 3,
-    title: "Fragments",
+    title: "Whispers in Rain",
     artist: "Afterstill",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    url: "https://cdn.pixabay.com/audio/2022/10/25/audio_552e51e6bf.mp3", // Soft atmospheric
+  },
+  {
+    id: 4,
+    title: "Gentle Night",
+    artist: "Twilight Echoes",
+    url: "https://cdn.pixabay.com/audio/2024/01/10/audio_d4e5b7c1c1.mp3", // Calm ambient
+  },
+  {
+    id: 5,
+    title: "Memory Fades",
+    artist: "Silent Reverie",
+    url: "https://cdn.pixabay.com/audio/2023/10/30/audio_952aca2e12.mp3", // Nostalgic ambient
   },
 ];
 

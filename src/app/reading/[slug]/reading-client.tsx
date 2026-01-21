@@ -318,7 +318,7 @@ export default function ReadingClient({ writing }: Props) {
       globalThis.location.href = `/reading/${prev.id}`;
     }
     if (key === "Escape") {
-      globalThis.location.href = "/";
+      globalThis.location.href = "/archive";
     }
   }, [next, prev]);
 
@@ -362,12 +362,12 @@ export default function ReadingClient({ writing }: Props) {
       <nav className="fixed top-0 inset-x-0 z-40 px-8 py-6 bg-linear-to-b from-background via-background/90 to-transparent">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
           <Link
-            href="/"
+            href="/archive"
             className={`text-[11px] tracking-[0.3em] text-zinc-400 hover:text-zinc-200 uppercase transition-colors duration-500 ${
               isLoaded ? "opacity-100" : "opacity-0"
             }`}
           >
-            ← Portal
+            ← Archive
           </Link>
           <span
             className={`text-[10px] text-zinc-500 font-mono tabular-nums transition-opacity duration-500 delay-100 ${

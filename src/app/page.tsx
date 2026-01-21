@@ -1325,7 +1325,7 @@ export default function HomePage() {
                 </h3>
               </div>
               <a 
-                href="/fragment"
+                href="/archive"
                 className="text-[10px] tracking-[0.3em] uppercase text-zinc-600 hover:text-zinc-400 transition-colors duration-300 flex items-center gap-2"
               >
                 View all
