@@ -7,6 +7,8 @@ import type { Writing } from "@/types/writing";
 import { MountainPathProgress } from "@/components/mountain-path-progress";
 import { ReadingCompanion } from "@/components/reading-companion";
 import { ReflectionBox } from "@/components/reflection-box";
+import { AmbientParticles } from "@/components/ambient-particles";
+import { ScrollProgress, ScrollToTop } from "@/components/scroll-progress";
 
 // Configure marked
 marked.setOptions({
@@ -344,7 +346,19 @@ export default function ReadingClient({ writing }: Props) {
   const hiddenContent = content.slice(revealedChars);
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-screen bg-background text-foreground safe-area-inset">
+      {/* Ambient Particles based on mood */}
+      <AmbientParticles 
+        count={30}
+        color={companionMood === "hopeful" ? "amber" : companionMood === "introspective" ? "violet" : companionMood === "peaceful" ? "cyan" : "neutral"}
+        intensity="subtle"
+        interactive={true}
+      />
+      
+      {/* Scroll Progress */}
+      <ScrollProgress showPercentage={false} color="rgba(139, 92, 246, 0.4)" />
+      <ScrollToTop />
+      
       {/* Reading Companion */}
       <ReadingCompanion 
         scrollProgress={progress}

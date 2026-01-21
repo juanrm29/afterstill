@@ -7,6 +7,8 @@ import { LivingTitle } from "@/components/living-title";
 import { triggerPortal } from "@/components/portal-transition";
 import { DeckReveal } from "@/components/deck-reveal";
 import { MainNavbar } from "@/components/main-navbar";
+import { AmbientParticles } from "@/components/ambient-particles";
+import { ScrollProgress, ScrollToTop } from "@/components/scroll-progress";
 
 // Writing type
 type Writing = {
@@ -561,7 +563,14 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen text-foreground relative overflow-hidden">
+    <div className="min-h-screen text-foreground relative overflow-hidden safe-area-inset">
+      {/* Ambient Particles */}
+      <AmbientParticles count={40} color="violet" intensity="subtle" interactive={true} />
+      
+      {/* Scroll Progress */}
+      <ScrollProgress showPercentage={false} color="rgba(139, 92, 246, 0.3)" />
+      <ScrollToTop />
+      
       {/* Ambient Landscape Background */}
       <AmbientLandscape 
         activeInstrument={activeInstrument}

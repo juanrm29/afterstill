@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
+import { AmbientParticles } from "@/components/ambient-particles";
+import { ScrollProgress, ScrollToTop } from "@/components/scroll-progress";
 
 interface Writing {
   id: string;
@@ -102,11 +104,18 @@ export default function FragmentPage() {
   const fragments = useMemo(() => extractFragments(writings), [writings]);
 
   return (
-    <div className="min-h-screen bg-[#030304] text-white">
+    <div className="min-h-screen bg-[#030304] text-white safe-area-inset">
+      {/* Ambient Particles */}
+      <AmbientParticles count={25} color="violet" intensity="subtle" />
+      
+      {/* Scroll Progress */}
+      <ScrollProgress color="rgba(167, 139, 250, 0.4)" />
+      <ScrollToTop />
+      
       {/* Subtle ambient */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div
-          className="absolute w-[600px] h-[600px] rounded-full blur-[180px] opacity-[0.025]"
+          className="absolute w-[600px] h-[600px] rounded-full blur-[180px] opacity-[0.025] animate-morph"
           style={{
             background: "radial-gradient(circle, #a78bfa, transparent 70%)",
             left: "50%",
@@ -116,16 +125,19 @@ export default function FragmentPage() {
         />
       </div>
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-8 py-8">
+      {/* Header - Mobile optimized */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-8 py-4 sm:py-6 glass">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link
             href="/"
-            className={`text-[11px] tracking-[0.3em] uppercase text-zinc-600 hover:text-zinc-400 transition-colors duration-500 ${
+            className={`text-[11px] tracking-[0.3em] uppercase text-zinc-600 hover:text-zinc-400 transition-colors duration-500 touch-target flex items-center gap-2 ${
               isLoaded ? "animate-fade-in" : "opacity-0"
             }`}
           >
-            ← Back
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            <span className="hidden sm:inline">Back</span>
           </Link>
           <h1
             className={`text-[11px] tracking-[0.4em] uppercase text-zinc-500 ${
