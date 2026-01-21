@@ -146,18 +146,6 @@ export function PortalTransitionProvider({ children }: PortalTransitionProps) {
             />
           ))}
           
-          {/* Title appearing */}
-          {portal.title && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <h2 
-                className="text-lg text-zinc-300 tracking-widest font-light portal-text"
-                style={{ animationDelay: '0.3s' }}
-              >
-                {portal.title}
-              </h2>
-            </div>
-          )}
-          
           {/* Loading indicator */}
           <div className="absolute bottom-12 left-1/2 -translate-x-1/2">
             <div className="flex gap-1">
