@@ -14,6 +14,16 @@ marked.setOptions({
   breaks: true,
 });
 
+// Preprocess content - convert literal <br> tags to newlines for markdown
+function preprocessContent(content: string): string {
+  return content
+    .replace(/<br\s*\/?>/gi, '\n\n')  // Convert <br> tags to double newlines (paragraphs)
+    .replace(/&nbsp;/gi, ' ')          // Convert &nbsp; to spaces
+    .replace(/&lt;/g, '<')             // Decode HTML entities if needed
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
 // Simple HTML sanitizer
 function sanitizeHtml(html: string): string {
   if (typeof window === "undefined") return html;
@@ -212,7 +222,8 @@ export default function ReadingClient({ writing }: Props) {
     };
   }, []);
 
-  const content = writing.content;
+  // Preprocess content for display (convert <br> to newlines)
+  const content = useMemo(() => preprocessContent(writing.content), [writing.content]);
   const wordCount = content.split(/\s+/).filter(Boolean).length;
   const readTime = Math.ceil(wordCount / 200);
   const currentIndex = writings.findIndex((w) => w.id === writing.id);

@@ -316,7 +316,23 @@ export default function WritingEditor({ mode, writing, tags, collections, author
           </div>
 
           {/* Genius Preview */}
-          <GeniusPreview content={content} title={title} />
+          <GeniusPreview 
+            content={content} 
+            title={title} 
+            onApplyExcerpt={(suggestedExcerpt) => setExcerpt(suggestedExcerpt)}
+            onApplyTags={(suggestedTags) => {
+              // Find or create tag IDs for suggested tags
+              suggestedTags.forEach(tagName => {
+                const existingTag = tags.find(t => 
+                  t.name.toLowerCase() === tagName.toLowerCase() || 
+                  t.slug === tagName.toLowerCase().replace(/\s+/g, "-")
+                );
+                if (existingTag && !selectedTags.includes(existingTag.id)) {
+                  setSelectedTags(prev => [...prev, existingTag.id]);
+                }
+              });
+            }}
+          />
 
           {/* Excerpt */}
           <div className="pt-6 border-t border-zinc-800/30">
