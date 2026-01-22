@@ -9,6 +9,14 @@ import { ReadingCompanion } from "@/components/reading-companion";
 import { ReflectionBox } from "@/components/reflection-box";
 import { AmbientParticles } from "@/components/ambient-particles";
 import { ScrollProgress, ScrollToTop } from "@/components/scroll-progress";
+import { LivingIllustration } from "@/components/living-illustration";
+import { AdaptiveAtmosphere } from "@/components/adaptive-atmosphere";
+import { HiddenLayers } from "@/components/hidden-layers";
+import { CollaborativeReflections } from "@/components/collaborative-reflections";
+import { ReadingRitual } from "@/components/reading-ritual";
+import { ResonanceThread, processResonantContent } from "@/components/resonance-thread";
+import { TypewriterMode } from "@/components/typewriter-mode";
+import { analyzeMood } from "@/lib/mood-analyzer";
 
 // Configure marked
 marked.setOptions({
@@ -165,6 +173,13 @@ export default function ReadingClient({ writing }: Props) {
   const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
   const [writings, setWritings] = useState<Writing[]>([]);
   
+  // New features state
+  const [showRitual, setShowRitual] = useState(true);
+  const [showTypewriterMode, setShowTypewriterMode] = useState(false);
+  // Candle mode is now managed by ReadingCompanion
+  const [readingStartTime] = useState(() => Date.now());
+  const [readingDuration, setReadingDuration] = useState(0);
+  
   // Reading companion state
   const [isActivelyReading, setIsActivelyReading] = useState(true);
   const lastScrollRef = useRef(Date.now());
@@ -226,6 +241,40 @@ export default function ReadingClient({ writing }: Props) {
 
   // Preprocess content for display (convert <br> to newlines)
   const content = useMemo(() => preprocessContent(writing.content), [writing.content]);
+  
+  // Build resonance map for word connections
+  const resonanceMap = useMemo(() => {
+    const map = new Map<string, { id: string; title: string; content: string }[]>();
+    const STOP_WORDS = new Set([
+      "yang", "dari", "untuk", "dengan", "dalam", "adalah", "atau", "pada", "ini", "itu",
+      "akan", "bisa", "juga", "tidak", "ada", "mereka", "kita", "kami", "saya", "kamu",
+      "the", "and", "but", "for", "with", "this", "that", "from", "have", "been", "were",
+      "are", "was", "would", "could", "should", "will", "can", "may", "about", "into"
+    ]);
+    
+    const extractWords = (text: string) => text.toLowerCase()
+      .replace(/[^\p{L}\s]/gu, " ").split(/\s+/)
+      .filter(w => w.length >= 4 && !STOP_WORDS.has(w));
+    
+    const currentWords = new Set(extractWords(content + " " + writing.title));
+    
+    writings.forEach(w => {
+      if (w.id === writing.id) return;
+      const otherWords = extractWords(w.content + " " + w.title);
+      otherWords.forEach(word => {
+        if (currentWords.has(word)) {
+          if (!map.has(word)) map.set(word, []);
+          const existing = map.get(word)!;
+          if (!existing.find(e => e.id === w.id)) {
+            existing.push({ id: w.id, title: w.title, content: w.content });
+          }
+        }
+      });
+    });
+    
+    return new Map([...map].filter(([_, writings]) => writings.length >= 1));
+  }, [content, writing, writings]);
+  
   const wordCount = content.split(/\s+/).filter(Boolean).length;
   const readTime = Math.ceil(wordCount / 200);
   const currentIndex = writings.findIndex((w) => w.id === writing.id);
@@ -280,21 +329,16 @@ export default function ReadingClient({ writing }: Props) {
     return () => globalThis.removeEventListener("scroll", onScroll);
   }, []);
   
-  // Detect mood from writing tags
+  // Detect mood from writing content, title, tags using advanced analyzer
   useEffect(() => {
-    const tags = writing.tags.map(t => t.toLowerCase());
-    if (tags.some(t => ["melancholy", "sadness", "loss", "grief", "rain"].includes(t))) {
-      setCompanionMood("melancholic");
-    } else if (tags.some(t => ["hope", "light", "growth", "future", "dawn"].includes(t))) {
-      setCompanionMood("hopeful");
-    } else if (tags.some(t => ["introspection", "thought", "mind", "reflection", "solitude"].includes(t))) {
-      setCompanionMood("introspective");
-    } else if (tags.some(t => ["peace", "calm", "quiet", "rest", "stillness"].includes(t))) {
-      setCompanionMood("peaceful");
-    } else {
-      setCompanionMood("neutral");
-    }
-  }, [writing.tags]);
+    const { mood } = analyzeMood(
+      writing.content,
+      writing.title,
+      writing.tags,
+      writing.excerpt
+    );
+    setCompanionMood(mood);
+  }, [writing.content, writing.title, writing.tags, writing.excerpt]);
   
   // Check if user stopped reading
   useEffect(() => {
@@ -303,6 +347,19 @@ export default function ReadingClient({ writing }: Props) {
       setIsActivelyReading(!idle);
     }, 2000);
     return () => clearInterval(checkIdle);
+  }, []);
+  
+  // Track reading duration for candle mode
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setReadingDuration(Math.floor((Date.now() - readingStartTime) / 60000));
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [readingStartTime]);
+  
+  // Handle ritual completion
+  const handleRitualComplete = useCallback(() => {
+    setShowRitual(false);
   }, []);
 
   // Load
@@ -347,6 +404,21 @@ export default function ReadingClient({ writing }: Props) {
 
   return (
     <main className="min-h-screen bg-background text-foreground safe-area-inset">
+      {/* Reading Ritual - shown on first visit */}
+      {showRitual && (
+        <ReadingRitual
+          title={writing.title}
+          excerpt={writing.excerpt}
+          onComplete={handleRitualComplete}
+        />
+      )}
+      
+      {/* Adaptive Atmosphere */}
+      <AdaptiveAtmosphere 
+        mood={companionMood}
+        intensity={progress / 100}
+      />
+      
       {/* Ambient Particles based on mood */}
       <AmbientParticles 
         count={30}
@@ -359,11 +431,12 @@ export default function ReadingClient({ writing }: Props) {
       <ScrollProgress showPercentage={false} color="rgba(139, 92, 246, 0.4)" />
       <ScrollToTop />
       
-      {/* Reading Companion */}
+      {/* Reading Companion with Candle Mode */}
       <ReadingCompanion 
         scrollProgress={progress}
         isReading={isActivelyReading}
         mood={companionMood}
+        readingDuration={readingDuration}
       />
       
       {/* Mountain Path Progress */}
@@ -394,10 +467,15 @@ export default function ReadingClient({ writing }: Props) {
       </nav>
 
       {/* Article */}
-      <article className="pt-32 pb-40 px-8">
+      <article className="pt-24 md:pt-32 pb-32 md:pb-40 px-4 md:px-8">
         <div className="max-w-2xl mx-auto">
+          {/* Living Illustration */}
+          <div className="mb-6 md:mb-10">
+            <LivingIllustration mood={companionMood} seed={writing.id} />
+          </div>
+          
           {/* Header */}
-          <header className="mb-20">
+          <header className="mb-12 md:mb-20">
             <div
               className={`flex items-center gap-4 mb-8 text-[10px] text-zinc-500 font-mono tracking-wide transition-opacity duration-500 ${
                 isLoaded ? "opacity-100" : "opacity-0"
@@ -412,11 +490,43 @@ export default function ReadingClient({ writing }: Props) {
               <span>{readTime} min</span>
             </div>
 
+            {/* Typography Morphing Title */}
             <h1
-              className={`text-[clamp(2rem,5vw,3rem)] font-extralight tracking-[-0.02em] leading-[1.15] mb-8 transition-all duration-700 delay-100 ${
+              className={`text-[clamp(1.75rem,5vw,3rem)] tracking-[-0.02em] leading-[1.15] mb-6 md:mb-8 transition-all duration-700 delay-100 ${
                 isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
-              style={{ fontFamily: "var(--font-cormorant), serif" }}
+              style={{
+                fontFamily:
+                  companionMood === "melancholic"
+                    ? '"IBM Plex Mono", monospace'
+                    : companionMood === "hopeful"
+                    ? '"Quicksand", var(--font-cormorant), serif'
+                    : companionMood === "introspective"
+                    ? '"Cormorant Garamond", serif'
+                    : companionMood === "peaceful"
+                    ? '"Montserrat", var(--font-cormorant), serif'
+                    : 'var(--font-cormorant), serif',
+                fontWeight:
+                  companionMood === "melancholic"
+                    ? 400
+                    : companionMood === "hopeful"
+                    ? 700
+                    : companionMood === "introspective"
+                    ? 300
+                    : companionMood === "peaceful"
+                    ? 500
+                    : 200,
+                fontStyle:
+                  companionMood === "introspective" ? "italic" : "normal",
+                letterSpacing:
+                  companionMood === "hopeful"
+                    ? "0.04em"
+                    : companionMood === "melancholic"
+                    ? "0.01em"
+                    : "-0.02em",
+                transition:
+                  "font-family 0.7s cubic-bezier(.4,0,.2,1), font-weight 0.7s, font-style 0.7s, letter-spacing 0.7s"
+              }}
             >
               {writing.title}
             </h1>
@@ -452,28 +562,33 @@ export default function ReadingClient({ writing }: Props) {
                 <span className="inline-block w-[2px] h-[1.1em] bg-foreground/20 ml-0.5 animate-pulse align-middle rounded-full" />
               </p>
             ) : (
-              // Full content - rendered markdown
-              <div 
-                className="prose prose-lg prose-invert prose-zinc max-w-none
-                  prose-headings:font-light prose-headings:tracking-tight prose-headings:text-zinc-200
-                  prose-h1:text-3xl prose-h1:mt-12 prose-h1:mb-6
-                  prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
-                  prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
-                  prose-p:text-[18px] prose-p:md:text-[20px] prose-p:leading-[2.1] prose-p:text-zinc-300 prose-p:font-light prose-p:tracking-[0.01em] prose-p:mb-8
-                  prose-a:text-violet-400 prose-a:no-underline hover:prose-a:underline
-                  prose-strong:text-zinc-200 prose-strong:font-medium
-                  prose-em:text-zinc-400 prose-em:italic
-                  prose-code:text-violet-400 prose-code:bg-zinc-800/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
-                  prose-pre:bg-zinc-900/60 prose-pre:border prose-pre:border-zinc-800/50 prose-pre:rounded-lg prose-pre:p-4
-                  prose-blockquote:border-l-2 prose-blockquote:border-violet-500/40 prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:text-zinc-400 prose-blockquote:not-italic prose-blockquote:font-light
-                  prose-ul:text-zinc-300 prose-ol:text-zinc-300
-                  prose-li:marker:text-zinc-600
-                  prose-hr:border-zinc-800/50 prose-hr:my-12
-                  prose-img:rounded-lg prose-img:my-8"
-                dangerouslySetInnerHTML={{ 
-                  __html: sanitizeHtml(marked(content) as string) 
-                }}
-              />
+              // Full content - rendered markdown with resonant words
+              <ResonanceThread
+                currentWriting={writing}
+                allWritings={writings}
+              >
+                <div 
+                  className="prose prose-lg prose-invert prose-zinc max-w-none resonance-container
+                    prose-headings:font-light prose-headings:tracking-tight prose-headings:text-zinc-200
+                    prose-h1:text-3xl prose-h1:mt-12 prose-h1:mb-6
+                    prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
+                    prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
+                    prose-p:text-[18px] prose-p:md:text-[20px] prose-p:leading-[2.1] prose-p:text-zinc-300 prose-p:font-light prose-p:tracking-[0.01em] prose-p:mb-8
+                    prose-a:text-violet-400 prose-a:no-underline hover:prose-a:underline
+                    prose-strong:text-zinc-200 prose-strong:font-medium
+                    prose-em:text-zinc-400 prose-em:italic
+                    prose-code:text-violet-400 prose-code:bg-zinc-800/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
+                    prose-pre:bg-zinc-900/60 prose-pre:border prose-pre:border-zinc-800/50 prose-pre:rounded-lg prose-pre:p-4
+                    prose-blockquote:border-l-2 prose-blockquote:border-violet-500/40 prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:text-zinc-400 prose-blockquote:not-italic prose-blockquote:font-light
+                    prose-ul:text-zinc-300 prose-ol:text-zinc-300
+                    prose-li:marker:text-zinc-600
+                    prose-hr:border-zinc-800/50 prose-hr:my-12
+                    prose-img:rounded-lg prose-img:my-8"
+                  dangerouslySetInnerHTML={{ 
+                    __html: sanitizeHtml(processResonantContent(marked(content) as string, resonanceMap)) 
+                  }}
+                />
+              </ResonanceThread>
             )}
             
             {isTyping && (
@@ -563,6 +678,21 @@ export default function ReadingClient({ writing }: Props) {
             />
           )}
 
+          {/* Collaborative Reflections */}
+          {!isTyping && (
+            <CollaborativeReflections
+              writingId={writing.id}
+              writingTitle={writing.title}
+            />
+          )}
+
+          {/* Hidden Layers */}
+          {!isTyping && (
+            <div className="mt-12 md:mt-16">
+              <HiddenLayers content={content} writingId={writing.id} />
+            </div>
+          )}
+
           {/* Navigation */}
           {!isTyping && (
             <nav className="mt-20 grid grid-cols-2 gap-12 animate-fade-in">
@@ -617,6 +747,46 @@ export default function ReadingClient({ writing }: Props) {
         >
           skip →
         </button>
+      )}
+      
+      {/* Typewriter Mode Toggle Button */}
+      {!isTyping && (
+        <button
+          onClick={() => setShowTypewriterMode(true)}
+          className="fixed bottom-52 sm:bottom-48 right-4 sm:right-6 z-50 p-3 rounded-full bg-stone-900/80 border border-stone-700/50 text-stone-400 hover:text-amber-300 hover:border-amber-700/50 transition-all duration-300 backdrop-blur-sm group"
+          title="Typewriter Mode"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-stone-900 text-xs text-stone-300 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Typewriter Mode
+          </span>
+        </button>
+      )}
+      
+      {/* Typewriter Mode Overlay */}
+      {showTypewriterMode && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-stone-300 text-sm font-mono tracking-wide">Experience: {writing.title}</h2>
+              <button
+                onClick={() => setShowTypewriterMode(false)}
+                className="p-2 text-stone-500 hover:text-stone-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <TypewriterMode
+              text={content}
+              title={writing.title}
+              onComplete={() => {}}
+            />
+          </div>
+        </div>
       )}
     </main>
   );

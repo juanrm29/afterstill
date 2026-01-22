@@ -1100,3 +1100,56 @@ body {
   background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
   z-index: 50;
 }
+
+/* Resonance Thread - Word connections */
+.resonant-word {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.resonant-word::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.resonant-word:hover {
+  color: rgb(167, 139, 250);
+}
+
+.resonant-word:hover::after {
+  opacity: 1;
+}
+
+@keyframes resonance-appear {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.animate-resonance-appear {
+  animation: resonance-appear 0.2s ease-out forwards;
+}
+
+/* Candle mode animations */
+@keyframes candle-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

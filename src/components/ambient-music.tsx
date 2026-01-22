@@ -155,12 +155,12 @@ export default function AmbientMusic() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[200]">
+    <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-[200]">
       {/* Collapsed state - just a music icon */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className={`
-          relative w-10 h-10 rounded-full border transition-all duration-500
+          relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border transition-all duration-500
           ${isExpanded 
             ? "border-foreground/30 bg-background/90 backdrop-blur-sm" 
             : "border-foreground/10 bg-background/50 hover:border-foreground/20"
@@ -181,7 +181,7 @@ export default function AmbientMusic() {
         {/* Music icon when not playing */}
         {!isPlaying && (
           <svg 
-            className="w-4 h-4 absolute inset-0 m-auto text-foreground/40"
+            className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute inset-0 m-auto text-foreground/40"
             fill="none" 
             viewBox="0 0 24 24" 
             stroke="currentColor"
@@ -194,7 +194,7 @@ export default function AmbientMusic() {
       {/* Expanded player */}
       {isExpanded && (
         <div 
-          className="absolute bottom-12 right-0 w-64 p-4 rounded-xl border border-foreground/10 bg-background/95 backdrop-blur-md shadow-2xl"
+          className="absolute bottom-11 sm:bottom-12 right-0 w-56 sm:w-64 p-3 sm:p-4 rounded-xl border border-foreground/10 bg-background/95 backdrop-blur-md shadow-2xl"
           style={{
             animation: "fadeIn 0.3s ease-out",
           }}

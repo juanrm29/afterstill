@@ -148,13 +148,13 @@ export function MountainPathProgress({ progress, title }: MountainPathProgressPr
       {/* Collapsed mini-view */}
       <button 
         type="button"
-        className="fixed bottom-20 right-4 z-50 cursor-pointer group bg-transparent border-0 p-0"
+        className="fixed bottom-36 sm:bottom-34 right-4 sm:right-6 z-50 cursor-pointer group bg-transparent border-0 p-0"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className={`
           relative bg-zinc-950/90 backdrop-blur-md rounded-lg border border-zinc-800/30
           transition-all duration-500 overflow-hidden
-          ${isExpanded ? 'w-44 h-56 p-3' : 'w-12 h-12 p-2'}
+          ${isExpanded ? 'w-40 sm:w-44 h-52 sm:h-56 p-2 sm:p-3' : 'w-10 h-10 sm:w-12 sm:h-12 p-1.5 sm:p-2'}
         `}>
           {/* Mini map SVG */}
           <svg 

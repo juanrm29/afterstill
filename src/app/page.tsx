@@ -9,6 +9,7 @@ import { DeckReveal } from "@/components/deck-reveal";
 import { MainNavbar } from "@/components/main-navbar";
 import { AmbientParticles } from "@/components/ambient-particles";
 import { ScrollProgress, ScrollToTop } from "@/components/scroll-progress";
+import { MoodRecommendation } from "@/components/mood-recommendation";
 
 // Writing type
 type Writing = {
@@ -1267,7 +1268,24 @@ export default function HomePage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════
-            SECTION 2: THE WHISPER WALL
+            SECTION 2: MOOD-BASED RECOMMENDATION
+            Daily reading recommendation based on time and mood
+        ═══════════════════════════════════════════════════════════════ */}
+        <section className="relative py-20 md:py-32 overflow-hidden">
+          {/* Subtle divider */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center gap-4">
+            <div className="w-16 md:w-24 h-px bg-gradient-to-r from-transparent to-zinc-800/40" />
+            <div className="w-1 h-1 rounded-full bg-zinc-800/50" />
+            <div className="w-16 md:w-24 h-px bg-gradient-to-l from-transparent to-zinc-800/40" />
+          </div>
+          
+          <div className="relative max-w-6xl mx-auto px-4 md:px-8">
+            <MoodRecommendation writings={writings} />
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════════
+            SECTION 3: THE WHISPER WALL
             Rotating quotes/excerpts from writings
         ═══════════════════════════════════════════════════════════════ */}
         <section className="relative py-40 overflow-hidden">
