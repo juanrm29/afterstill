@@ -10,6 +10,7 @@ import { MainNavbar } from "@/components/main-navbar";
 import { AmbientParticles } from "@/components/ambient-particles";
 import { ScrollProgress, ScrollToTop } from "@/components/scroll-progress";
 import { MoodRecommendation } from "@/components/mood-recommendation";
+import { InkPool } from "@/components/ink-pool";
 
 // Writing type
 type Writing = {
@@ -1281,6 +1282,34 @@ export default function HomePage() {
           
           <div className="relative max-w-6xl mx-auto px-4 md:px-8">
             <MoodRecommendation writings={writings} />
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════════
+            SECTION: THE INK POOL
+            Interactive pool of floating writings
+        ═══════════════════════════════════════════════════════════════ */}
+        <section className="relative py-20 md:py-32 overflow-hidden">
+          {/* Subtle divider */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center gap-4">
+            <div className="w-16 md:w-24 h-px bg-gradient-to-r from-transparent to-zinc-800/40" />
+            <div className="w-1.5 h-1.5 rounded-full bg-violet-500/30" />
+            <div className="w-16 md:w-24 h-px bg-gradient-to-l from-transparent to-zinc-800/40" />
+          </div>
+          
+          <div className="relative max-w-6xl mx-auto px-4 md:px-8">
+            {/* Section header */}
+            <div className="text-center mb-10">
+              <p className="text-[10px] tracking-[0.5em] uppercase text-zinc-600 mb-3">
+                Explore the depths
+              </p>
+              <h3 className="text-2xl font-extralight text-zinc-400" style={{ fontFamily: "var(--font-cormorant), serif" }}>
+                The Ink Pool
+              </h3>
+            </div>
+            
+            {/* The Pool */}
+            <InkPool writings={writings} />
           </div>
         </section>
 

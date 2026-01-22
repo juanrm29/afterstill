@@ -9,34 +9,25 @@ const playlist = [
     id: 1,
     title: "Floating Dreams",
     artist: "Ambient Collective",
-    // Ambient piano from SoundHelix (reliable test audio)
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    // Free ambient tracks from Internet Archive
+    url: "https://ia800503.us.archive.org/8/items/relaxing-music/Relaxing%20Music.mp3",
   },
   {
     id: 2,
     title: "Gentle Stillness",
     artist: "The Quiet Hours",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    url: "https://ia801002.us.archive.org/14/items/ambient-music_202106/ambient-music.mp3",
   },
   {
     id: 3,
     title: "Whispered Memories",
     artist: "Afterstill",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-  },
-  {
-    id: 4,
-    title: "Evening Calm",
-    artist: "Twilight Echoes",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-  },
-  {
-    id: 5,
-    title: "Silent Reflection",
-    artist: "Ambient Dreams",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+    url: "https://ia600209.us.archive.org/2/items/SleepMusic/01%20Sleep%20Music.mp3",
   },
 ];
+
+// Silent audio as fallback (1 second of silence encoded as base64)
+const SILENT_AUDIO = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYNBqQAAAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYNBqQAAAAAAAAAAAAAAAAA";
 
 export default function AmbientMusic() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -46,7 +37,9 @@ export default function AmbientMusic() {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const maxRetries = playlist.length;
 
   // Initialize audio only on client
   useEffect(() => {
@@ -56,25 +49,38 @@ export default function AmbientMusic() {
     audio.volume = volume;
     audio.loop = false;
     audio.preload = "auto";
-    audio.crossOrigin = "anonymous";
     audioRef.current = audio;
     
     const handleEnded = () => {
+      setRetryCount(0);
       setCurrentTrack((prev) => (prev + 1) % playlist.length);
     };
     
     const handleCanPlay = () => {
       setIsLoaded(true);
       setLoadError(false);
+      setRetryCount(0);
     };
     
     const handleError = () => {
-      console.log("Audio load error, trying next track...");
+      // Only log once per track
+      if (retryCount === 0) {
+        console.log("Audio load error, trying next track...");
+      }
       setLoadError(true);
-      // Try next track on error
-      setTimeout(() => {
-        setCurrentTrack((prev) => (prev + 1) % playlist.length);
-      }, 1000);
+      
+      // Try next track on error, but limit retries
+      if (retryCount < maxRetries) {
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => {
+          setCurrentTrack((prev) => (prev + 1) % playlist.length);
+        }, 500);
+      } else {
+        // All tracks failed, use silent fallback
+        if (audioRef.current) {
+          audioRef.current.src = SILENT_AUDIO;
+        }
+      }
     };
     
     audio.addEventListener("ended", handleEnded);
