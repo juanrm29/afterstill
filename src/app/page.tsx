@@ -667,81 +667,150 @@ export default function HomePage() {
         {/* Hero Section - Full Viewport */}
         <div className="min-h-screen flex flex-col px-6 sm:px-8 lg:px-16 pt-24 pb-12">
         
-        {/* Hero Section - Asymmetric Split Layout */}
-        <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-center gap-12 lg:gap-8 max-w-7xl mx-auto w-full mt-8 lg:mt-16">
+        {/* Hero Section - Cinematic Center Stage */}
+        <div className="flex-1 flex flex-col items-center justify-center max-w-6xl mx-auto w-full relative">
           
-          {/* Left Side - Statement */}
-          <div className={`flex-1 flex flex-col justify-center lg:pr-16 ${isLoaded ? "animate-reveal" : "opacity-0"}`}>
-            {/* Subtle geometric accent */}
-            <div className="hidden lg:block absolute left-8 top-1/3 w-px h-32 bg-gradient-to-b from-transparent via-zinc-700/30 to-transparent" />
+          {/* Radial light effect from title */}
+          <div 
+            className="absolute pointer-events-none"
+            style={{
+              width: '800px',
+              height: '600px',
+              background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.03) 0%, transparent 50%)',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -60%)',
+            }}
+          />
+          
+          {/* The Word - Massive Center Typography */}
+          <div className={`text-center relative z-10 ${isLoaded ? "animate-reveal" : "opacity-0"}`}>
             
-            {/* Eyebrow text */}
-            <div className="flex items-center gap-3 mb-6">
-              <span className="w-8 h-px bg-zinc-700/60" />
-              <span className="text-[10px] tracking-[0.4em] uppercase text-zinc-600 font-light">
-                A quiet space
+            {/* Subtle top accent */}
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <span className="w-12 h-px bg-gradient-to-r from-transparent to-zinc-700/40" />
+              <span className="text-[9px] tracking-[0.5em] uppercase text-zinc-600/80 font-light">
+                {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </span>
+              <span className="w-12 h-px bg-gradient-to-l from-transparent to-zinc-700/40" />
             </div>
             
-            {/* Main Title - Large & Dramatic */}
-            <LivingTitle 
-              text={settings.siteTagline}
-              className="text-[clamp(2.8rem,7vw,5rem)] font-extralight tracking-[-0.04em] text-zinc-200 leading-[0.95] text-left"
-            />
+            {/* Main Title - Dramatic Scale */}
+            <div className="relative">
+              {/* Ghost shadow for depth */}
+              <h1 
+                className="absolute inset-0 text-[clamp(3.5rem,12vw,9rem)] font-extralight tracking-[-0.05em] text-transparent leading-[0.85] select-none blur-[2px] opacity-20"
+                style={{ 
+                  fontFamily: "var(--font-cormorant), serif",
+                  WebkitTextStroke: '1px rgba(139, 92, 246, 0.3)',
+                }}
+                aria-hidden="true"
+              >
+                {settings.siteName}
+              </h1>
+              
+              {/* Main title */}
+              <h1 
+                className="relative text-[clamp(3.5rem,12vw,9rem)] font-extralight tracking-[-0.05em] text-transparent leading-[0.85]"
+                style={{ 
+                  fontFamily: "var(--font-cormorant), serif",
+                  background: 'linear-gradient(to bottom, rgba(250, 250, 249, 0.95) 0%, rgba(168, 162, 158, 0.7) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {settings.siteName}
+              </h1>
+            </div>
             
-            {/* Description with elegant treatment */}
+            {/* Tagline with elegant reveal */}
+            <div className="mt-6 overflow-hidden">
+              <p 
+                className="text-lg sm:text-xl text-zinc-500 font-light tracking-[0.15em] uppercase"
+                style={{ 
+                  fontFamily: "var(--font-cormorant), serif",
+                  letterSpacing: '0.2em',
+                }}
+              >
+                {settings.siteTagline}
+              </p>
+            </div>
+            
+            {/* Description - Poetic treatment */}
             {settings.siteDescription && (
-              <div className="mt-10 max-w-md">
+              <div className="mt-8 max-w-lg mx-auto">
                 <p 
-                  className="text-lg text-zinc-500/90 font-light leading-relaxed tracking-wide"
+                  className="text-base text-zinc-500/70 font-light leading-relaxed italic"
                   style={{ fontFamily: "var(--font-cormorant), serif" }}
                 >
-                  <span className="text-zinc-400/60 text-2xl leading-none mr-1">"</span>
                   {settings.siteDescription}
-                  <span className="text-zinc-400/60 text-2xl leading-none ml-1">"</span>
                 </p>
               </div>
             )}
             
-            {/* Scroll indicator - only on desktop */}
-            <div className="hidden lg:flex items-center gap-3 mt-16 text-zinc-600">
-              <div className="w-4 h-8 rounded-full border border-zinc-700/50 flex items-start justify-center p-1">
-                <div className="w-1 h-2 bg-zinc-600 rounded-full animate-bounce" style={{ animationDuration: "2s" }} />
-              </div>
-              <span className="text-[10px] tracking-[0.3em] uppercase font-light">Explore</span>
+            {/* Minimal divider */}
+            <div className="mt-12 flex items-center justify-center">
+              <div className="w-px h-16 bg-gradient-to-b from-zinc-700/50 via-zinc-700/20 to-transparent" />
+            </div>
+            
+            {/* Whisper Quote - Floating wisdom */}
+            <div className="mt-8 h-16 flex items-center justify-center">
+              <p 
+                className="text-sm text-zinc-600/60 max-w-md font-light transition-opacity duration-500"
+                style={{ 
+                  fontFamily: "var(--font-cormorant), serif",
+                  opacity: whisperOpacity,
+                }}
+              >
+                "{whisperQuotes[whisperIndex]}"
+              </p>
             </div>
           </div>
           
-          {/* Right Side - The Deck Shrine */}
-          <div className={`flex-1 flex items-center justify-center relative ${isLoaded ? "animate-reveal delay-2" : "opacity-0"}`}>
-            {/* Sacred geometry background */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              {/* Outer ring */}
-              <div className="absolute w-[400px] h-[400px] rounded-full border border-zinc-800/20" />
-              {/* Middle ring */}
-              <div className="absolute w-[320px] h-[320px] rounded-full border border-zinc-800/15" style={{ animation: "spin 60s linear infinite" }} />
-              {/* Inner ring */}
-              <div className="absolute w-[240px] h-[240px] rounded-full border border-zinc-800/10" style={{ animation: "spin 45s linear infinite reverse" }} />
-              
-              {/* Cross lines */}
-              <div className="absolute w-px h-[400px] bg-gradient-to-b from-transparent via-zinc-800/20 to-transparent" />
-              <div className="absolute w-[400px] h-px bg-gradient-to-r from-transparent via-zinc-800/20 to-transparent" />
-              
-              {/* Corner accents */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px]">
-                <div className="absolute top-0 left-0 w-6 h-6 border-l border-t border-zinc-700/20" />
-                <div className="absolute top-0 right-0 w-6 h-6 border-r border-t border-zinc-700/20" />
-                <div className="absolute bottom-0 left-0 w-6 h-6 border-l border-b border-zinc-700/20" />
-                <div className="absolute bottom-0 right-0 w-6 h-6 border-r border-b border-zinc-700/20" />
-              </div>
-              
-              {/* Ambient glow */}
-              <div className="absolute w-64 h-64 bg-zinc-700/5 rounded-full blur-3xl" />
+          {/* Scroll indicator - Minimal */}
+          <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 ${isLoaded ? "animate-reveal delay-3" : "opacity-0"}`}>
+            <span className="text-[9px] tracking-[0.3em] uppercase text-zinc-600/50 font-light">Scroll</span>
+            <div className="w-px h-8 bg-gradient-to-b from-zinc-600/50 to-transparent relative overflow-hidden">
+              <div 
+                className="absolute inset-x-0 h-4 bg-zinc-400/60"
+                style={{ animation: 'scrollPulse 2s ease-in-out infinite' }}
+              />
             </div>
+          </div>
+        </div>
+        </div>
+        
+        {/* The Deck Section - Separate */}
+        <div className="min-h-screen flex flex-col items-center justify-center px-6 sm:px-8 lg:px-16 py-24 relative">
+          
+          {/* Section Title */}
+          <div className={`text-center mb-16 ${isLoaded ? "animate-reveal" : "opacity-0"}`}>
+            <span className="text-[9px] tracking-[0.5em] uppercase text-zinc-600/60 font-light">Choose Your Path</span>
+            <h2 
+              className="mt-4 text-2xl sm:text-3xl font-extralight text-zinc-300/80 tracking-wide"
+              style={{ fontFamily: "var(--font-cormorant), serif" }}
+            >
+              The Four Instruments
+            </h2>
+          </div>
+          
+          {/* Sacred geometry background */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
+            {/* Outer ring */}
+            <div className="absolute w-[500px] h-[500px] rounded-full border border-zinc-800/20" />
+            {/* Middle ring */}
+            <div className="absolute w-[400px] h-[400px] rounded-full border border-zinc-800/15" style={{ animation: "spin 90s linear infinite" }} />
+            {/* Inner ring */}
+            <div className="absolute w-[300px] h-[300px] rounded-full border border-zinc-800/10" style={{ animation: "spin 60s linear infinite reverse" }} />
             
-            {/* The Deck - Elevated */}
-            <div className="relative z-10">
-              <DeckReveal isLoaded={isLoaded}>
+            {/* Cross lines */}
+            <div className="absolute w-px h-[500px] bg-gradient-to-b from-transparent via-zinc-800/15 to-transparent" />
+            <div className="absolute w-[500px] h-px bg-gradient-to-r from-transparent via-zinc-800/15 to-transparent" />
+          </div>
+          
+          {/* The Deck */}
+          <div className="relative z-10">
+            <DeckReveal isLoaded={isLoaded}>
             {/* ORACLE */}
             {settings.oracleEnabled && (
             <button
@@ -1263,9 +1332,7 @@ export default function HomePage() {
             </button>
             )}
           </DeckReveal>
-            </div>
           </div>
-        </div>
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════

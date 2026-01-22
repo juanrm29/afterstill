@@ -100,7 +100,7 @@ export function InkPool({ writings, onSelectWriting }: Props) {
     setFloatingCards(cards);
   }, [writings]);
 
-  // Canvas ripple animation
+  // Canvas ripple animation - lighter version
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -124,85 +124,47 @@ export function InkPool({ writings, onSelectWriting }: Props) {
       
       const now = Date.now();
       
-      // Draw ink trails first (behind ripples)
-      inkTrails.forEach(trail => {
-        const age = (now - trail.startTime) / 1000;
-        const maxAge = 2;
-        
-        if (age > maxAge) return;
-        
-        const progress = age / maxAge;
-        const opacity = (1 - progress) * 0.15;
-        const size = 8 + progress * 20;
-        
-        // Ink blob effect
-        ctx.beginPath();
-        ctx.arc(trail.x, trail.y, size, 0, Math.PI * 2);
-        const gradient = ctx.createRadialGradient(trail.x, trail.y, 0, trail.x, trail.y, size);
-        gradient.addColorStop(0, `rgba(80, 60, 120, ${opacity})`);
-        gradient.addColorStop(0.5, `rgba(60, 40, 100, ${opacity * 0.5})`);
-        gradient.addColorStop(1, 'transparent');
-        ctx.fillStyle = gradient;
-        ctx.fill();
-      });
-      
-      // Draw ripples
+      // Draw subtle ripples only
       ripples.forEach(ripple => {
         const age = (now - ripple.startTime) / 1000;
-        const maxAge = ripple.size === 2 ? 4 : 3;
+        const maxAge = ripple.size >= 2 ? 3 : 2;
         
-        if (age > maxAge) return;
+        if (age < 0 || age > maxAge) return;
         
-        const progress = age / maxAge;
-        const maxRadius = ripple.size === 2 ? 300 : 180;
-        const radius = progress * maxRadius;
-        const opacity = (1 - progress) * (ripple.size === 2 ? 0.4 : 0.25);
+        const progress = Math.max(0, Math.min(1, age / maxAge));
+        const maxRadius = ripple.size >= 2 ? 200 : 120;
+        const radius = Math.max(0.1, progress * maxRadius);
+        const opacity = (1 - progress) * (ripple.size >= 2 ? 0.15 : 0.08);
         
-        // Multiple concentric rings with varying thickness
-        for (let i = 0; i < 4; i++) {
-          const ringRadius = radius - i * (ripple.size === 2 ? 20 : 12);
-          if (ringRadius < 0) continue;
-          
+        if (opacity <= 0) return;
+        
+        // Single subtle ring
+        ctx.beginPath();
+        ctx.arc(ripple.x, ripple.y, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Inner faint ring
+        const innerRadius = radius * 0.6;
+        if (innerRadius > 20) {
           ctx.beginPath();
-          ctx.arc(ripple.x, ripple.y, ringRadius, 0, Math.PI * 2);
-          
-          // Color varies - violet to indigo
-          const hue = 270 - i * 10;
-          ctx.strokeStyle = `hsla(${hue}, 60%, 60%, ${opacity * (1 - i * 0.2)})`;
-          ctx.lineWidth = (2 - i * 0.3) * ripple.size;
+          ctx.arc(ripple.x, ripple.y, innerRadius, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(139, 92, 246, ${opacity * 0.5})`;
+          ctx.lineWidth = 0.5;
           ctx.stroke();
-        }
-        
-        // Inner glow for click ripples
-        if (ripple.size === 2 && progress < 0.3) {
-          const innerGradient = ctx.createRadialGradient(ripple.x, ripple.y, 0, ripple.x, ripple.y, 50);
-          innerGradient.addColorStop(0, `rgba(139, 92, 246, ${0.2 * (1 - progress / 0.3)})`);
-          innerGradient.addColorStop(1, 'transparent');
-          ctx.fillStyle = innerGradient;
-          ctx.fill();
         }
       });
 
-      // Draw subtle moonlight reflection
-      const moonX = rect.width * 0.8;
-      const moonY = rect.height * 0.15;
-      const gradient = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, 180);
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.04)');
-      gradient.addColorStop(0.3, 'rgba(200, 200, 255, 0.02)');
-      gradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, rect.width, rect.height);
-
-      // Ambient water movement
-      const waterTime = now / 3000;
-      for (let i = 0; i < 8; i++) {
-        const sx = (Math.sin(waterTime + i * 0.8) * 0.4 + 0.5) * rect.width;
-        const sy = (Math.cos(waterTime * 0.6 + i * 1.5) * 0.4 + 0.5) * rect.height;
-        const size = 3 + Math.sin(waterTime * 2 + i) * 2;
+      // Very subtle ambient shimmer
+      const waterTime = now / 4000;
+      for (let i = 0; i < 5; i++) {
+        const sx = (Math.sin(waterTime + i * 1.2) * 0.4 + 0.5) * rect.width;
+        const sy = (Math.cos(waterTime * 0.5 + i * 2) * 0.4 + 0.5) * rect.height;
         
         ctx.beginPath();
-        ctx.arc(sx, sy, size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(139, 92, 246, ${0.03 + Math.sin(waterTime + i) * 0.015})`;
+        ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(139, 92, 246, ${0.015 + Math.sin(waterTime + i) * 0.01})`;
         ctx.fill();
       }
       
@@ -215,19 +177,18 @@ export function InkPool({ writings, onSelectWriting }: Props) {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animationRef.current);
     };
-  }, [ripples, inkTrails]);
+  }, [ripples]);
 
-  // Clean old ripples and trails
+  // Clean old ripples
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
-      setRipples(prev => prev.filter(r => now - r.startTime < 4000));
-      setInkTrails(prev => prev.filter(t => now - t.startTime < 2000));
+      setRipples(prev => prev.filter(r => now - r.startTime < 3000));
     }, 500);
     return () => clearInterval(interval);
   }, []);
 
-  // Handle mouse move - create ripples and ink trails
+  // Handle mouse move - create ripples only (lighter)
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -238,31 +199,20 @@ export function InkPool({ writings, onSelectWriting }: Props) {
     
     const now = Date.now();
     
-    // Throttle ripple creation
-    if (now - lastRippleTime.current > 120) {
+    // Throttle ripple creation - less frequent
+    if (now - lastRippleTime.current > 200) {
       lastRippleTime.current = now;
-      setRipples(prev => [...prev, {
+      setRipples(prev => [...prev.slice(-15), {
         id: rippleIdRef.current++,
         x,
         y,
         startTime: now,
-        size: 1,
-      }]);
-    }
-    
-    // Ink trail - more frequent
-    if (now - lastTrailTime.current > 60) {
-      lastTrailTime.current = now;
-      setInkTrails(prev => [...prev.slice(-20), {
-        id: trailIdRef.current++,
-        x: x + (Math.random() - 0.5) * 10,
-        y: y + (Math.random() - 0.5) * 10,
-        startTime: now,
+        size: 0.8,
       }]);
     }
   }, []);
 
-  // Handle click - create bigger ripple burst
+  // Handle click - create subtle ripple
   const handleClick = useCallback((e: React.MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -270,26 +220,13 @@ export function InkPool({ writings, onSelectWriting }: Props) {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    // Create multiple ripples for click with big size
+    // Create simple ripples for click
     const now = Date.now();
     setRipples(prev => [
-      ...prev,
+      ...prev.slice(-20),
       { id: rippleIdRef.current++, x, y, startTime: now, size: 2 },
-      { id: rippleIdRef.current++, x, y, startTime: now + 150, size: 1.5 },
-      { id: rippleIdRef.current++, x, y, startTime: now + 300, size: 1 },
+      { id: rippleIdRef.current++, x, y, startTime: now + 100, size: 1.5 },
     ]);
-    
-    // Ink splash
-    for (let i = 0; i < 5; i++) {
-      const angle = (i / 5) * Math.PI * 2;
-      const dist = 20 + Math.random() * 30;
-      setInkTrails(prev => [...prev, {
-        id: trailIdRef.current++,
-        x: x + Math.cos(angle) * dist,
-        y: y + Math.sin(angle) * dist,
-        startTime: now + i * 50,
-      }]);
-    }
   }, []);
 
   // Handle card hover
@@ -357,21 +294,9 @@ export function InkPool({ writings, onSelectWriting }: Props) {
     setFloatingCards(prev => prev.map(card => 
       card.id === draggingCard ? { ...card, x: clampedX, y: clampedY } : card
     ));
-    
-    // Create trail while dragging
-    const now = Date.now();
-    if (now - lastTrailTime.current > 30) {
-      lastTrailTime.current = now;
-      setInkTrails(prev => [...prev.slice(-30), {
-        id: trailIdRef.current++,
-        x: clientX - rect.left,
-        y: clientY - rect.top,
-        startTime: now,
-      }]);
-    }
   }, [draggingCard, dragOffset]);
 
-  // Drag end - create splash ripple
+  // Drag end - create subtle splash ripple
   const handleDragEnd = useCallback(() => {
     if (!draggingCard) return;
     
@@ -383,26 +308,12 @@ export function InkPool({ writings, onSelectWriting }: Props) {
       const dropY = (card.y / 100) * rect.height;
       const now = Date.now();
       
-      // Create big splash ripples
+      // Create subtle splash ripples
       setRipples(prev => [
-        ...prev,
-        { id: rippleIdRef.current++, x: dropX, y: dropY, startTime: now, size: 2.5 },
-        { id: rippleIdRef.current++, x: dropX, y: dropY, startTime: now + 80, size: 2 },
-        { id: rippleIdRef.current++, x: dropX, y: dropY, startTime: now + 160, size: 1.5 },
-        { id: rippleIdRef.current++, x: dropX, y: dropY, startTime: now + 240, size: 1 },
+        ...prev.slice(-15),
+        { id: rippleIdRef.current++, x: dropX, y: dropY, startTime: now, size: 2 },
+        { id: rippleIdRef.current++, x: dropX, y: dropY, startTime: now + 100, size: 1.5 },
       ]);
-      
-      // Create ink splash burst
-      for (let i = 0; i < 8; i++) {
-        const angle = (i / 8) * Math.PI * 2;
-        const dist = 30 + Math.random() * 50;
-        setInkTrails(prev => [...prev, {
-          id: trailIdRef.current++,
-          x: dropX + Math.cos(angle) * dist,
-          y: dropY + Math.sin(angle) * dist,
-          startTime: now + i * 30,
-        }]);
-      }
     }
     
     // Update card state - keep new position
@@ -441,74 +352,43 @@ export function InkPool({ writings, onSelectWriting }: Props) {
       onTouchMove={handleDragMove}
       onTouchEnd={handleDragEnd}
       onClick={handleClick}
-      style={{
-        background: `
-          radial-gradient(ellipse at 80% 15%, rgba(40, 35, 60, 0.6) 0%, transparent 40%),
-          radial-gradient(ellipse at 20% 80%, rgba(25, 20, 50, 0.5) 0%, transparent 50%),
-          radial-gradient(ellipse at 50% 100%, rgba(20, 15, 40, 0.8) 0%, transparent 60%),
-          linear-gradient(to bottom, #08080d 0%, #050509 50%, #030306 100%)
-        `,
-      }}
     >
-      {/* Deep water gradient overlay */}
+      {/* Very subtle water surface hint - almost invisible */}
       <div 
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none opacity-30"
         style={{
-          background: `
-            radial-gradient(ellipse at 50% 80%, rgba(60, 40, 100, 0.1) 0%, transparent 50%),
-            linear-gradient(to bottom, transparent 0%, rgba(20, 15, 40, 0.3) 100%)
-          `,
+          background: 'radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.02) 0%, transparent 70%)',
         }}
       />
 
-      {/* Water surface canvas */}
+      {/* Water ripple canvas */}
       <canvas 
         ref={canvasRef}
         className="absolute inset-0 w-full h-full pointer-events-none"
       />
-      
-      {/* Animated surface texture */}
-      <div 
-        className="absolute inset-0 opacity-[0.04] pointer-events-none"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          animation: 'surfaceShift 20s ease-in-out infinite',
-        }}
-      />
 
-      {/* Center title - submerged in water */}
+      {/* Center title */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div 
-          className="text-center"
-          style={{
-            filter: 'blur(0.3px)',
-            animation: 'titleFloat 6s ease-in-out infinite',
-          }}
-        >
+        <div className="text-center">
           <h1 
-            className="text-4xl sm:text-5xl md:text-6xl font-light tracking-[-0.02em] mb-4"
+            className="text-3xl sm:text-4xl md:text-5xl font-light tracking-[-0.02em] mb-3"
             style={{ 
               fontFamily: 'var(--font-cormorant), serif',
-              background: 'linear-gradient(to bottom, rgba(214, 211, 209, 0.7), rgba(168, 162, 158, 0.4))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              textShadow: '0 2px 20px rgba(139, 92, 246, 0.1)',
+              color: 'rgba(168, 162, 158, 0.4)',
             }}
           >
             Afterstill
           </h1>
           <p 
-            className="text-xs sm:text-sm tracking-[0.3em] uppercase"
-            style={{
-              color: 'rgba(120, 113, 108, 0.5)',
-            }}
+            className="text-[10px] sm:text-xs tracking-[0.25em] uppercase"
+            style={{ color: 'rgba(120, 113, 108, 0.35)' }}
           >
             Words floating in stillness
           </p>
         </div>
       </div>
 
-      {/* Floating cards with water integration */}
+      {/* Floating cards */}
       {floatingCards.map((card) => {
         const floatY = getFloatY(card);
         const floatRotation = getFloatRotation(card);
@@ -542,132 +422,66 @@ export function InkPool({ writings, onSelectWriting }: Props) {
               className="absolute left-0 right-0 pointer-events-none overflow-hidden"
               style={{
                 top: '100%',
-                height: '60px',
+                height: '30px',
                 transform: 'scaleY(-1)',
-                opacity: isDragging ? 0 : card.isLifted ? 0.08 : 0.15,
-                filter: `blur(${card.isLifted ? 8 : 4}px)`,
-                maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)',
-                transition: 'opacity 0.5s, filter 0.5s',
+                opacity: card.isHovered ? 0.1 : 0.05,
+                filter: 'blur(4px)',
+                maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)',
+                transition: 'opacity 0.3s',
               }}
             >
               <div 
-                className="px-5 py-4 rounded-lg bg-stone-900/60 border border-stone-800/30"
-                style={{
-                  minWidth: '140px',
-                  maxWidth: '200px',
-                }}
+                className="px-4 py-3 rounded-lg bg-stone-900/40"
+                style={{ minWidth: '120px', maxWidth: '180px' }}
               >
-                <span className="text-sm text-stone-400 opacity-60">{card.title}</span>
+                <span className="text-xs text-stone-400 opacity-40">{card.title}</span>
               </div>
             </div>
             
-            {/* Drag glow effect */}
-            {isDragging && (
-              <div 
-                className="absolute -inset-6 rounded-2xl pointer-events-none animate-pulse"
-                style={{
-                  background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.3), transparent 70%)',
-                  filter: 'blur(10px)',
-                }}
-              />
-            )}
-            
-            {/* Water ripple ring around card on hover */}
+            {/* Simple card */}
             <div 
-              className={`absolute -inset-4 rounded-full pointer-events-none transition-all duration-700 ${
-                card.isHovered && !isDragging ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
-              }`}
+              className="relative px-4 py-3 rounded-lg border transition-all duration-300"
               style={{
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                boxShadow: '0 0 20px rgba(139, 92, 246, 0.1)',
-              }}
-            />
-            
-            {/* Card with water-submerged effect */}
-            <div 
-              className={`
-                relative px-5 py-4 rounded-lg border backdrop-blur-sm
-                transition-all duration-500
-              `}
-              style={{
-                minWidth: '140px',
-                maxWidth: '200px',
+                minWidth: '120px',
+                maxWidth: '180px',
                 background: card.isHovered || card.isLifted 
-                  ? 'linear-gradient(to bottom, rgba(41, 37, 36, 0.85), rgba(28, 25, 23, 0.9))'
-                  : 'linear-gradient(to bottom, rgba(28, 25, 23, 0.6), rgba(20, 17, 15, 0.7))',
+                  ? 'rgba(28, 25, 23, 0.8)'
+                  : 'rgba(20, 17, 15, 0.6)',
                 borderColor: card.isHovered || card.isLifted 
-                  ? 'rgba(139, 92, 246, 0.3)' 
-                  : 'rgba(68, 64, 60, 0.25)',
-                boxShadow: isDragging
-                  ? '0 20px 60px rgba(139, 92, 246, 0.3), 0 0 80px rgba(139, 92, 246, 0.15)'
-                  : card.isHovered || card.isLifted
-                    ? '0 8px 32px rgba(139, 92, 246, 0.15), 0 0 60px rgba(139, 92, 246, 0.05), inset 0 1px 0 rgba(255,255,255,0.05)'
-                    : '0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.02)',
+                  ? 'rgba(139, 92, 246, 0.2)' 
+                  : 'rgba(68, 64, 60, 0.15)',
+                boxShadow: card.isHovered || card.isLifted
+                  ? '0 4px 20px rgba(0, 0, 0, 0.2)'
+                  : '0 2px 10px rgba(0, 0, 0, 0.15)',
                 transform: isDragging
-                  ? 'translateY(-30px) scale(1.08)'
-                  : card.isLifted 
-                    ? 'translateY(-25px) scale(1.05)' 
-                    : card.isHovered 
-                      ? 'translateY(-12px) scale(1.02)' 
-                      : 'translateY(0) scale(1)',
+                  ? 'translateY(-15px) scale(1.05)'
+                  : card.isHovered 
+                    ? 'translateY(-8px) scale(1.02)' 
+                    : 'translateY(0) scale(1)',
               }}
             >
-              {/* Surface light reflection on card */}
-              <div 
-                className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%, rgba(139, 92, 246, 0.02) 100%)',
-                }}
-              />
-              
-              {/* Glow effect */}
-              {(card.isHovered || card.isLifted || isDragging) && (
-                <div 
-                  className="absolute -inset-2 rounded-xl -z-10"
-                  style={{
-                    background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.15), transparent 70%)',
-                    filter: 'blur(15px)',
-                  }}
-                />
-              )}
-              
               <h3 
-                className="text-sm font-light leading-snug transition-colors duration-300 relative z-10"
+                className="text-sm font-light leading-snug transition-colors duration-300"
                 style={{ 
                   fontFamily: 'var(--font-cormorant), serif',
-                  color: card.isHovered || card.isLifted || isDragging ? 'rgba(245, 245, 244, 0.95)' : 'rgba(168, 162, 158, 0.8)',
+                  color: card.isHovered || card.isLifted ? 'rgba(245, 245, 244, 0.9)' : 'rgba(168, 162, 158, 0.7)',
                 }}
               >
                 {card.title}
               </h3>
               
-              {/* Show excerpt on hover - hide while dragging */}
-              <div className={`overflow-hidden transition-all duration-500 ${
-                card.isHovered && !isDragging ? 'max-h-20 opacity-100 mt-2' : 'max-h-0 opacity-0'
+              {/* Show excerpt on hover */}
+              <div className={`overflow-hidden transition-all duration-300 ${
+                card.isHovered && !isDragging ? 'max-h-16 opacity-100 mt-2' : 'max-h-0 opacity-0'
               }`}>
-                <p className="text-[10px] text-stone-500/80 line-clamp-2">
+                <p className="text-[10px] text-stone-500/70 line-clamp-2">
                   {card.excerpt}
                 </p>
               </div>
-
-              {/* Water drip effect when lifted or dragging */}
-              {(card.isLifted || isDragging) && (
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
-                  {[0, 1, 2].map(i => (
-                    <div 
-                      key={i}
-                      className="w-1 h-1 rounded-full bg-violet-400/50"
-                      style={{
-                        animation: `waterDrip 0.8s ease-in ${i * 0.15}s forwards infinite`,
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
             </div>
             
-            {/* Click to navigate link - only show when not dragging */}
+            {/* Click to navigate link */}
             {!isDragging && (
               <Link 
                 href={`/reading/${card.id}`}
