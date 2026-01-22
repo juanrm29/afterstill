@@ -683,7 +683,7 @@ export default function HomePage() {
             }}
           />
           
-          {/* The Word - Massive Center Typography */}
+          {/* The Word - Mind-Blowing Center Typography */}
           <div className={`text-center relative z-10 ${isLoaded ? "animate-reveal" : "opacity-0"}`}>
             
             {/* Subtle top accent */}
@@ -695,29 +695,74 @@ export default function HomePage() {
               <span className="w-12 h-px bg-gradient-to-l from-transparent to-zinc-700/40" />
             </div>
             
-            {/* Main Title - Dramatic Scale */}
+            {/* Main Title - Parallax Depth + Aurora Text */}
             <div className="relative">
-              {/* Ghost shadow for depth */}
+              
+              {/* Ambient glow behind text */}
+              <div 
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 40%, transparent 70%)',
+                  filter: 'blur(40px)',
+                  animation: 'glowPulse 8s ease-in-out infinite',
+                  transform: 'scale(1.5)',
+                }}
+              />
+              
+              {/* Depth Layer 3 - Furthest back */}
               <h1 
-                className="absolute inset-0 text-[clamp(3.5rem,12vw,9rem)] font-extralight tracking-[-0.05em] text-transparent leading-[0.85] select-none blur-[2px] opacity-20"
+                className="absolute inset-0 text-[clamp(3.5rem,12vw,9rem)] font-extralight tracking-[-0.05em] text-transparent leading-[0.85] select-none"
                 style={{ 
                   fontFamily: "var(--font-cormorant), serif",
-                  WebkitTextStroke: '1px rgba(139, 92, 246, 0.3)',
+                  WebkitTextStroke: '1px rgba(59, 130, 246, 0.08)',
+                  transform: 'translate(-4px, 4px)',
+                  animation: 'depthDrift 20s ease-in-out infinite',
+                  filter: 'blur(3px)',
                 }}
                 aria-hidden="true"
               >
                 {settings.siteName}
               </h1>
               
-              {/* Main title */}
+              {/* Depth Layer 2 - Middle */}
+              <h1 
+                className="absolute inset-0 text-[clamp(3.5rem,12vw,9rem)] font-extralight tracking-[-0.05em] text-transparent leading-[0.85] select-none"
+                style={{ 
+                  fontFamily: "var(--font-cormorant), serif",
+                  WebkitTextStroke: '1px rgba(139, 92, 246, 0.15)',
+                  transform: 'translate(-2px, 2px)',
+                  animation: 'depthDriftReverse 15s ease-in-out infinite',
+                  filter: 'blur(1.5px)',
+                }}
+                aria-hidden="true"
+              >
+                {settings.siteName}
+              </h1>
+              
+              {/* Main title - Aurora gradient flowing through text */}
               <h1 
                 className="relative text-[clamp(3.5rem,12vw,9rem)] font-extralight tracking-[-0.05em] text-transparent leading-[0.85]"
                 style={{ 
                   fontFamily: "var(--font-cormorant), serif",
-                  background: 'linear-gradient(to bottom, rgba(250, 250, 249, 0.95) 0%, rgba(168, 162, 158, 0.7) 100%)',
+                  background: 'linear-gradient(135deg, rgba(250, 250, 249, 0.95) 0%, rgba(139, 92, 246, 0.8) 25%, rgba(59, 130, 246, 0.7) 50%, rgba(168, 162, 158, 0.9) 75%, rgba(250, 250, 249, 0.95) 100%)',
+                  backgroundSize: '400% 400%',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
+                  animation: 'auroraFlow 12s ease-in-out infinite',
                 }}
+              >
+                {settings.siteName}
+              </h1>
+              
+              {/* Front highlight layer */}
+              <h1 
+                className="absolute inset-0 text-[clamp(3.5rem,12vw,9rem)] font-extralight tracking-[-0.05em] text-transparent leading-[0.85] select-none pointer-events-none"
+                style={{ 
+                  fontFamily: "var(--font-cormorant), serif",
+                  WebkitTextStroke: '0.5px rgba(255, 255, 255, 0.1)',
+                  mixBlendMode: 'overlay',
+                }}
+                aria-hidden="true"
               >
                 {settings.siteName}
               </h1>

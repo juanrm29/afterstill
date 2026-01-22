@@ -376,6 +376,68 @@ body {
   }
 }
 
+/* Aurora gradient flow - organic northern lights */
+@keyframes auroraFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 50% 100%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 0%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Depth layer drift - subtle parallax echo */
+@keyframes depthDrift {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(2px, -1px);
+  }
+  50% {
+    transform: translate(-1px, 1px);
+  }
+  75% {
+    transform: translate(1px, 2px);
+  }
+}
+
+@keyframes depthDriftReverse {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-2px, 1px);
+  }
+  50% {
+    transform: translate(1px, -1px);
+  }
+  75% {
+    transform: translate(-1px, -2px);
+  }
+}
+
+/* Soft glow pulse */
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.3;
+    filter: blur(20px);
+  }
+  50% {
+    opacity: 0.5;
+    filter: blur(25px);
+  }
+}
+
 /* Character-by-character reveal */
 @keyframes charReveal {
   from {
