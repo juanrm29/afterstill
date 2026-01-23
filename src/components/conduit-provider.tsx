@@ -1,17 +1,35 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, createContext, useContext } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import AmbientMusic from "./ambient-music";
+import { type ConduitCommand, type ConduitResponse, type WritingPreview } from "@/lib/conduit-protocol";
 
 type ConnectionStatus = "waiting" | "connected" | "disconnected";
 
-interface ConduitCommand {
-  type: "conduit-connected" | "shake" | "navigate" | "atmosphere";
-  randomWritingId?: string;
-  writingId?: string;
-  [key: string]: unknown;
+interface AltarState {
+  currentWriting: WritingPreview | null;
+  readingProgress: number;
+  isReading: boolean;
+  atmosphere: {
+    soundLevel: number;
+    isDimmed: boolean;
+  };
+}
+
+// Context for other components to interact with conduit
+interface ConduitContextValue {
+  isConnected: boolean;
+  sendToWand: (response: ConduitResponse) => void;
+  updateReadingProgress: (progress: number) => void;
+  setCurrentWriting: (writing: WritingPreview | null) => void;
+}
+
+const ConduitContext = createContext<ConduitContextValue | null>(null);
+
+export function useConduit() {
+  return useContext(ConduitContext);
 }
 
 export default function ConduitProvider() {
@@ -26,10 +44,46 @@ export default function ConduitProvider() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [conduitUrl, setConduitUrl] = useState("");
   const [shakeEffect, setShakeEffect] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  
+  const [altarState, setAltarState] = useState<AltarState>({
+    currentWriting: null,
+    readingProgress: 0,
+    isReading: false,
+    atmosphere: {
+      soundLevel: 0.3,
+      isDimmed: false,
+    },
+  });
   
   const peerRef = useRef<any>(null);
   const connRef = useRef<any>(null);
   const mountedRef = useRef(true);
+  
+  // Send response to connected wand
+  const sendToWand = useCallback((response: ConduitResponse) => {
+    if (connRef.current && status === "connected") {
+      try {
+        connRef.current.send(response);
+      } catch (err) {
+        console.error("Failed to send to wand:", err);
+      }
+    }
+  }, [status]);
+  
+  // Update reading progress and sync to wand
+  const updateReadingProgress = useCallback((progress: number) => {
+    setAltarState(prev => ({ ...prev, readingProgress: progress }));
+    sendToWand({ type: "state:reading", progress });
+  }, [sendToWand]);
+  
+  // Set current writing and sync to wand
+  const setCurrentWriting = useCallback((writing: WritingPreview | null) => {
+    setAltarState(prev => ({ ...prev, currentWriting: writing, isReading: !!writing }));
+    if (writing) {
+      sendToWand({ type: "state:writing", writing });
+    }
+  }, [sendToWand]);
 
   // Generate room code once
   useEffect(() => {
@@ -49,24 +103,258 @@ export default function ConduitProvider() {
     }
   }, [roomCode]);
 
-  // Handle conduit commands
-  const handleCommand = useCallback((data: ConduitCommand) => {
+  // Handle conduit commands from wand
+  const handleCommand = useCallback(async (data: ConduitCommand) => {
     console.log("Received command:", data);
     
-    if (data.type === "conduit-connected") {
-      if (mountedRef.current) setStatus("connected");
-    } else if (data.type === "navigate" && data.writingId) {
-      // Navigate to reading page
-      router.push(`/reading/${data.writingId}`);
-    } else if (data.type === "shake" && data.randomWritingId) {
-      // Trigger shake effect then navigate
-      if (mountedRef.current) setShakeEffect(true);
-      setTimeout(() => {
-        if (mountedRef.current) setShakeEffect(false);
-        router.push(`/reading/${data.randomWritingId}`);
-      }, 600);
+    // Show feedback on altar
+    const showFeedback = (msg: string) => {
+      setFeedbackMessage(msg);
+      setTimeout(() => setFeedbackMessage(null), 2000);
+    };
+    
+    switch (data.type) {
+      case "handshake":
+        if (mountedRef.current) {
+          setStatus("connected");
+          sendToWand({ type: "connected", roomCode });
+          
+          // Send current state
+          if (altarState.currentWriting) {
+            sendToWand({ type: "state:writing", writing: altarState.currentWriting });
+          }
+        }
+        break;
+        
+      case "gesture:shake":
+        // Shake triggers random writing
+        setShakeEffect(true);
+        showFeedback("🌀 Destiny shaken...");
+        
+        try {
+          const res = await fetch("/api/writings?random=1");
+          if (res.ok) {
+            const writings = await res.json();
+            if (writings.length > 0) {
+              const random = writings[0];
+              setTimeout(() => {
+                setShakeEffect(false);
+                router.push(`/reading/${random.slug}`);
+              }, 600);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to get random:", err);
+          setShakeEffect(false);
+        }
+        break;
+        
+      case "gesture:swipe":
+        // Swipe controls scroll or navigation
+        if (data.direction === "up" || data.direction === "down") {
+          const scrollAmount = data.direction === "up" ? -300 : 300;
+          window.scrollBy({ top: scrollAmount, behavior: "smooth" });
+          showFeedback(data.direction === "up" ? "↑ Ascending..." : "↓ Descending...");
+        } else if (data.direction === "left") {
+          router.back();
+          showFeedback("← Returning...");
+        } else if (data.direction === "right") {
+          router.push("/archive");
+          showFeedback("→ To the archive...");
+        }
+        break;
+        
+      case "gesture:tilt":
+        // Tilt controls ambient atmosphere (subtle scroll parallax)
+        // Could be used for more visual effects
+        break;
+        
+      case "gesture:tap":
+        // Tap to pause/resume
+        showFeedback("✧ Presence acknowledged");
+        sendToWand({ type: "feedback:vibrate", pattern: [30] });
+        break;
+        
+      case "gesture:hold":
+        // Hold to enter zen mode
+        document.body.classList.toggle("zen-mode");
+        showFeedback(document.body.classList.contains("zen-mode") ? "🧘 Zen activated" : "Zen released");
+        break;
+        
+      case "gesture:draw":
+        // Shape casting
+        if (data.shape === "circle") {
+          // Circle = Oracle divine
+          showFeedback("○ Circle of fate cast...");
+          try {
+            const res = await fetch("/api/oracle/divine", { method: "POST" });
+            if (res.ok) {
+              const result = await res.json();
+              sendToWand({
+                type: "oracle:result",
+                writing: {
+                  id: result.writing.id,
+                  slug: result.writing.slug,
+                  title: result.writing.title,
+                  excerpt: result.writing.content?.slice(0, 100),
+                },
+                message: result.message,
+              });
+              router.push(`/reading/${result.writing.slug}`);
+            }
+          } catch (err) {
+            console.error("Oracle error:", err);
+          }
+        } else if (data.shape === "triangle") {
+          showFeedback("△ Ascending to wisdom...");
+          router.push("/about");
+        } else if (data.shape === "infinity") {
+          showFeedback("∞ The eternal scroll...");
+          router.push("/archive");
+        }
+        break;
+        
+      case "navigate:random":
+        showFeedback("🎲 Fate deciding...");
+        try {
+          const res = await fetch("/api/writings?random=1");
+          if (res.ok) {
+            const writings = await res.json();
+            if (writings.length > 0) {
+              router.push(`/reading/${writings[0].slug}`);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to get random:", err);
+        }
+        break;
+        
+      case "navigate:path":
+        if (data.path) {
+          router.push(data.path);
+          showFeedback(`→ Navigating...`);
+        }
+        break;
+        
+      case "reading:scroll":
+        // Sync scroll from wand
+        if (typeof data.delta === "number") {
+          window.scrollBy({ top: data.delta * 5, behavior: "smooth" });
+        }
+        break;
+        
+      case "reading:pause":
+        // Toggle pause state
+        document.body.classList.toggle("reading-paused");
+        showFeedback("⏸ Reading paused");
+        break;
+        
+      case "oracle:divine":
+        showFeedback("🔮 Consulting the oracle...");
+        try {
+          const body: { latitude?: number; longitude?: number } = {};
+          if (data.location) {
+            body.latitude = data.location.lat;
+            body.longitude = data.location.lon;
+          }
+          
+          const res = await fetch("/api/oracle/divine", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          
+          if (res.ok) {
+            const result = await res.json();
+            sendToWand({
+              type: "oracle:result",
+              writing: {
+                id: result.writing.id,
+                slug: result.writing.slug,
+                title: result.writing.title,
+                excerpt: result.writing.content?.slice(0, 100),
+              },
+              message: result.message,
+            });
+            router.push(`/reading/${result.writing.slug}`);
+          }
+        } catch (err) {
+          console.error("Oracle error:", err);
+          sendToWand({ type: "oracle:result", message: "The oracle is silent..." });
+        }
+        break;
+        
+      case "oracle:whisper":
+        // Handle whisper question from wand
+        showFeedback("🌙 The void hears you...");
+        if (data.message) {
+          try {
+            const res = await fetch("/api/oracle/respond", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message: data.message }),
+            });
+            
+            if (res.ok) {
+              const result = await res.json();
+              sendToWand({
+                type: "oracle:response",
+                message: result.message,
+                quote: result.quote,
+              });
+            }
+          } catch (err) {
+            console.error("Whisper error:", err);
+          }
+        }
+        break;
+        
+      case "atmosphere:sound":
+        // Control ambient sound level via custom event
+        if (typeof data.level === "number") {
+          window.dispatchEvent(new CustomEvent("conduit:sound", { detail: { level: data.level } }));
+          setAltarState(prev => ({
+            ...prev,
+            atmosphere: { ...prev.atmosphere, soundLevel: data.level as number },
+          }));
+        }
+        break;
+        
+      case "atmosphere:dim":
+        // Toggle dim mode
+        document.body.classList.toggle("dimmed", true);
+        setAltarState(prev => ({
+          ...prev,
+          atmosphere: { ...prev.atmosphere, isDimmed: true },
+        }));
+        showFeedback("🌑 Dimming the altar...");
+        break;
+        
+      case "atmosphere:brighten":
+        document.body.classList.remove("dimmed");
+        setAltarState(prev => ({
+          ...prev,
+          atmosphere: { ...prev.atmosphere, isDimmed: false },
+        }));
+        showFeedback("☀️ Light returns...");
+        break;
+        
+      case "voice:command":
+        // Voice command from wand
+        if (data.text) {
+          // Parse simple commands
+          const cmd = (data.text as string).toLowerCase();
+          if (cmd.includes("random")) {
+            router.push("/archive?random=true");
+          } else if (cmd.includes("oracle")) {
+            router.push("/conduit");
+          } else if (cmd.includes("home")) {
+            router.push("/");
+          }
+        }
+        break;
     }
-  }, [router]);
+  }, [router, roomCode, sendToWand, altarState.currentWriting]);
 
   // Initialize PeerJS as host (altar) - persistent connection
   useEffect(() => {
@@ -163,12 +451,34 @@ export default function ConduitProvider() {
 
   // Don't render on conduit page
   if (isConduitPage) return null;
+  
+  const contextValue: ConduitContextValue = {
+    isConnected: status === "connected",
+    sendToWand,
+    updateReadingProgress,
+    setCurrentWriting,
+  };
 
   return (
-    <>
+    <ConduitContext.Provider value={contextValue}>
       {/* Shake overlay effect */}
       {shakeEffect && (
-        <div className="fixed inset-0 z-[300] pointer-events-none animate-conduit-shake" />
+        <div className="fixed inset-0 z-[300] pointer-events-none animate-conduit-shake bg-white/5" />
+      )}
+      
+      {/* Feedback message overlay */}
+      {feedbackMessage && (
+        <div 
+          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[400] 
+                     px-6 py-4 rounded-2xl border border-white/20 bg-black/80 backdrop-blur-xl
+                     text-white text-center pointer-events-none"
+          style={{ 
+            fontFamily: "var(--font-cormorant), serif",
+            animation: "fadeInOut 2s ease-out forwards"
+          }}
+        >
+          <p className="text-lg">{feedbackMessage}</p>
+        </div>
       )}
       
       {/* Conduit Panel */}
@@ -274,7 +584,6 @@ export default function ConduitProvider() {
               </>
             )}
 
-            {/* Mystical text */}
             <div className="mt-4 pt-3 border-t border-foreground/5">
               <p className="text-[8px] text-foreground/20 text-center font-mono italic">
                 {status === "connected" 
@@ -290,11 +599,17 @@ export default function ConduitProvider() {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
           }
+          @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+          }
         `}</style>
       </div>
       
       {/* Ambient Music - always available */}
       <AmbientMusic />
-    </>
+    </ConduitContext.Provider>
   );
 }

@@ -16,6 +16,7 @@ import { CollaborativeReflections } from "@/components/collaborative-reflections
 import { ReadingRitual } from "@/components/reading-ritual";
 import { ResonanceThread, processResonantContent } from "@/components/resonance-thread";
 import { TypewriterMode } from "@/components/typewriter-mode";
+import { SyncReading } from "@/components/sync-reading";
 import { analyzeMood } from "@/lib/mood-analyzer";
 
 // Configure marked
@@ -404,6 +405,16 @@ export default function ReadingClient({ writing }: Props) {
 
   return (
     <main className="min-h-screen bg-background text-foreground safe-area-inset">
+      {/* Sync Reading with Conduit wand */}
+      <SyncReading 
+        writing={{
+          id: writing.id,
+          slug: writing.id,
+          title: writing.title,
+          content: writing.content,
+        }}
+      />
+      
       {/* Reading Ritual - shown on first visit */}
       {showRitual && (
         <ReadingRitual
