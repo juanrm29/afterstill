@@ -1,0 +1,13 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api
+Disallow: /conduit
+Disallow: /fragment
+
+# Host
+Host: https://afterstill.com
+
+# Sitemaps
+Sitemap: https://afterstill.com/sitemap.xml

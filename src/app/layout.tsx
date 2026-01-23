@@ -4,11 +4,18 @@ import "./globals.css";
 import ConduitProvider from "@/components/conduit-provider";
 import PortalTransitionProvider from "@/components/portal-transition";
 import { ReadingModeProvider } from "@/components/reading-mode";
+import { PWAProvider } from "@/components/pwa-provider";
 import {
   generateSEOMetadata,
   generateOrganizationSchema,
   generateWebsiteSchema,
 } from "@/lib/seo";
+import { setupGlobalErrorHandler } from "@/lib/error-handling";
+
+// Setup error handling
+if (typeof window !== "undefined") {
+  setupGlobalErrorHandler();
+}
 
 const inter = Inter({
   variable: "--font-inter",
@@ -96,10 +103,18 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${cormorant.variable} antialiased no-bounce`}>
+        {/* Skip to main content link for keyboard accessibility */}
+        <a href="#main-content" className="skip-to-content">
+          Skip to main content
+        </a>
+        
+        <PWAProvider />
         <ReadingModeProvider>
           <ConduitProvider />
           <PortalTransitionProvider>
-            {children}
+            <main id="main-content" tabIndex={-1}>
+              {children}
+            </main>
           </PortalTransitionProvider>
         </ReadingModeProvider>
       </body>

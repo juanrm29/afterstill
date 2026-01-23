@@ -3,7 +3,9 @@
   "short_name": "Afterstill",
   "description": "A mindblowing, aesthetic literacy showcase with an intelligent discovery and reading experience",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
   "background_color": "#030304",
   "theme_color": "#030304",
   "orientation": "portrait-primary",
@@ -12,16 +14,62 @@
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["books", "education", "entertainment"],
-  "lang": "en",
-  "dir": "ltr"
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Read Latest",
+      "short_name": "Read",
+      "description": "Jump to the latest writing",
+      "url": "/archive",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Explore Atlas",
+      "short_name": "Atlas",
+      "description": "Explore the semantic graph",
+      "url": "/atlas",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["books", "education", "entertainment", "lifestyle"],
+  "lang": "id",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "handle_links": "preferred"
 }
