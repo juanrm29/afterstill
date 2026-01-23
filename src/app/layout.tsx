@@ -10,6 +10,7 @@ import { TemporalGlow, TemporalWelcome } from "@/components/temporal-ui";
 import { ProceduralAmbientPlayer } from "@/components/procedural-ambient";
 import { PresenceGlow } from "@/components/presence-indicator";
 import { KeyboardRitualsProvider } from "@/components/keyboard-rituals-provider";
+import { ThemeSoftener } from "@/components/theme-softener";
 import {
   generateSEOMetadata,
   generateOrganizationSchema,
@@ -114,6 +115,7 @@ export default function RootLayout({
         </a>
         
         <PWAProvider />
+        <ThemeSoftener />
         <ConsciousnessProvider>
           <TemporalGlow />
           <PresenceGlow />
