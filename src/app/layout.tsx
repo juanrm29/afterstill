@@ -5,6 +5,11 @@ import ConduitProvider from "@/components/conduit-provider";
 import PortalTransitionProvider from "@/components/portal-transition";
 import { ReadingModeProvider } from "@/components/reading-mode";
 import { PWAProvider } from "@/components/pwa-provider";
+import { ConsciousnessProvider } from "@/components/consciousness-provider";
+import { TemporalGlow, TemporalWelcome } from "@/components/temporal-ui";
+import { ProceduralAmbientPlayer } from "@/components/procedural-ambient";
+import { PresenceGlow } from "@/components/presence-indicator";
+import { KeyboardRitualsProvider } from "@/components/keyboard-rituals-provider";
 import {
   generateSEOMetadata,
   generateOrganizationSchema,
@@ -109,14 +114,21 @@ export default function RootLayout({
         </a>
         
         <PWAProvider />
-        <ReadingModeProvider>
-          <ConduitProvider />
-          <PortalTransitionProvider>
-            <main id="main-content" tabIndex={-1}>
-              {children}
-            </main>
-          </PortalTransitionProvider>
-        </ReadingModeProvider>
+        <ConsciousnessProvider>
+          <TemporalGlow />
+          <PresenceGlow />
+          <KeyboardRitualsProvider>
+            <ReadingModeProvider>
+              <ConduitProvider />
+              <PortalTransitionProvider>
+                <main id="main-content" tabIndex={-1}>
+                  {children}
+                </main>
+              </PortalTransitionProvider>
+            </ReadingModeProvider>
+          </KeyboardRitualsProvider>
+          <ProceduralAmbientPlayer />
+        </ConsciousnessProvider>
       </body>
     </html>
   );

@@ -5,10 +5,11 @@
 
 /// <reference lib="webworker" />
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
+const ORACLE_CACHE = `oracle-${CACHE_VERSION}`;
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -17,6 +18,8 @@ const STATIC_ASSETS = [
   "/manifest.json",
   "/favicon.svg",
   "/apple-touch-icon.png",
+  "/conduit",
+  "/archive",
 ];
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
@@ -58,6 +61,12 @@ sw.addEventListener("fetch", (event) => {
 
   // Skip cross-origin requests
   if (url.origin !== location.origin) return;
+
+  // Oracle API - cache for offline divination
+  if (url.pathname.startsWith("/api/oracle/") || url.pathname.startsWith("/api/writings")) {
+    event.respondWith(networkFirstWithOracleCache(request));
+    return;
+  }
 
   // API requests - network first
   if (url.pathname.startsWith("/api/")) {
@@ -140,6 +149,31 @@ async function staleWhileRevalidate(request: Request): Promise<Response> {
   });
 
   return cached || fetchPromise;
+}
+
+// Oracle-specific caching - allows offline divination with cached writings
+async function networkFirstWithOracleCache(request: Request): Promise<Response> {
+  try {
+    const response = await fetch(request);
+    const cache = await caches.open(ORACLE_CACHE);
+    cache.put(request, response.clone());
+    return response;
+  } catch (error) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    
+    // Return a mystical offline response for oracle
+    return new Response(
+      JSON.stringify({
+        offline: true,
+        message: "The oracle speaks only through the ethereal connection. Please reconnect.",
+      }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
 }
 
 // Background sync for offline actions

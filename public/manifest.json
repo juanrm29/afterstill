@@ -63,6 +63,13 @@
       "description": "Explore the semantic graph",
       "url": "/atlas",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Consult Oracle",
+      "short_name": "Oracle",
+      "description": "Let the universe choose a writing for you",
+      "url": "/conduit",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ],
   "categories": ["books", "education", "entertainment", "lifestyle"],
