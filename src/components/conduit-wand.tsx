@@ -121,7 +121,15 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
         const Peer = (await import("peerjs")).default;
         
         const peerId = `wand-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-        const peer = new Peer(peerId, { debug: 0 });
+        const peer = new Peer(peerId, { 
+          debug: 0,
+          config: {
+            iceServers: [
+              { urls: "stun:stun.l.google.com:19302" },
+              { urls: "stun:stun1.l.google.com:19302" },
+            ],
+          },
+        });
         peerRef.current = peer;
         
         peer.on("open", () => {
@@ -443,27 +451,66 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
           transition={{ duration: 0.3 }}
         >
           <AnimatePresence mode="wait">
-            <motion.span
+            <motion.div
               key={state.lastGesture || "idle"}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="text-4xl"
+              className="text-white/60"
             >
-              {state.lastGesture === "shake" && "🌀"}
-              {state.lastGesture?.startsWith("swipe") && "👆"}
-              {state.lastGesture === "tap" && "✧"}
-              {state.lastGesture === "oracle" && "🔮"}
-              {state.lastGesture === "random" && "🎲"}
-              {!state.lastGesture && "✋"}
-            </motion.span>
+              {state.lastGesture === "shake" && (
+                <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M4 4l4 4M20 4l-4 4M4 20l4-4M20 20l-4-4" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              )}
+              {state.lastGesture?.startsWith("swipe") && (
+                <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M12 19V5M5 12l7-7 7 7" />
+                </svg>
+              )}
+              {state.lastGesture === "tap" && (
+                <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="12" cy="12" r="3" />
+                  <circle cx="12" cy="12" r="8" strokeDasharray="4 4" />
+                </svg>
+              )}
+              {state.lastGesture === "oracle" && (
+                <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+                </svg>
+              )}
+              {state.lastGesture === "random" && (
+                <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+                  <circle cx="16" cy="16" r="1.5" fill="currentColor" />
+                  <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                </svg>
+              )}
+              {state.lastGesture === "whisper" && (
+                <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
+              )}
+              {!state.lastGesture && (
+                <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                  <path d="M18 11V6a6 6 0 00-12 0v5" />
+                  <path d="M12 11v6" />
+                  <circle cx="12" cy="19" r="2" />
+                  <path d="M8 11h8" />
+                </svg>
+              )}
+            </motion.div>
           </AnimatePresence>
         </motion.div>
         
         {/* Instructions */}
         <div className="space-y-2 text-center text-[10px] font-mono text-white/30">
-          <p>↔ Tilt to browse • 🔄 Shake for random</p>
-          <p>↑ Swipe up to scroll • Tap to select</p>
+          <p>Tilt to browse · Shake for random</p>
+          <p>Swipe to scroll · Tap to select</p>
         </div>
         
         {/* Oracle Message */}
@@ -551,16 +598,27 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={triggerOracle}
-            className="flex-1 py-3 rounded-lg border border-white/20 bg-white/5 text-white/70 text-sm"
+            className="flex-1 py-3 rounded-lg border border-white/20 bg-white/5 text-white/70 text-sm flex items-center justify-center"
           >
-            🔮
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+            </svg>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={triggerRandom}
-            className="flex-1 py-3 rounded-lg border border-white/20 bg-white/5 text-white/70 text-sm"
+            className="flex-1 py-3 rounded-lg border border-white/20 bg-white/5 text-white/70 text-sm flex items-center justify-center"
           >
-            🎲
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+              <circle cx="16" cy="8" r="1.5" fill="currentColor" />
+              <circle cx="8" cy="16" r="1.5" fill="currentColor" />
+              <circle cx="16" cy="16" r="1.5" fill="currentColor" />
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+            </svg>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -569,13 +627,15 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
               mode: prev.mode === "whisper" ? "gesture" : "whisper",
               voidResponse: null,
             }))}
-            className={`flex-1 py-3 rounded-lg border text-sm ${
+            className={`flex-1 py-3 rounded-lg border text-sm flex items-center justify-center ${
               state.mode === "whisper" 
                 ? "border-purple-500/50 bg-purple-500/20 text-purple-200"
                 : "border-white/20 bg-white/5 text-white/70"
             }`}
           >
-            🌙
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+            </svg>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -583,13 +643,18 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
               ...prev, 
               mode: prev.mode === "drawing" ? "gesture" : "drawing" 
             }))}
-            className={`flex-1 py-3 rounded-lg border text-sm ${
+            className={`flex-1 py-3 rounded-lg border text-sm flex items-center justify-center ${
               state.mode === "drawing" 
                 ? "border-cyan-500/50 bg-cyan-500/20 text-cyan-200"
                 : "border-white/20 bg-white/5 text-white/70"
             }`}
           >
-            ✏️
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M12 19l7-7 3 3-7 7-3-3z" />
+              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+              <path d="M2 2l7.586 7.586" />
+              <circle cx="11" cy="11" r="2" />
+            </svg>
           </motion.button>
         </div>
         

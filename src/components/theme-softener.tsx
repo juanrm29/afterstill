@@ -13,24 +13,50 @@ interface ThemeConfig {
   description: string;
 }
 
+// SVG Icons for themes
+const ThemeIcon = ({ mode }: { mode: ThemeMode }) => {
+  if (mode === "midnight") {
+    return (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+      </svg>
+    );
+  }
+  if (mode === "twilight") {
+    return (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M12 3v1M12 20v1M4.22 4.22l.7.7M18.36 18.36l.7.7M1 12h1M22 12h1M4.22 19.78l.7-.7M18.36 5.64l.7-.7" />
+      <circle cx="12" cy="12" r="5" />
+      <path d="M12 7v0M12 17v0" />
+    </svg>
+  );
+};
+
 const THEMES: Record<ThemeMode, ThemeConfig> = {
   midnight: {
     name: "Midnight",
-    icon: "🌑",
+    icon: "midnight",
     filter: "none",
     bgOpacity: 1,
     description: "The original darkness",
   },
   twilight: {
     name: "Twilight",
-    icon: "🌙",
+    icon: "twilight",
     filter: "brightness(1.12) contrast(0.96)",
     bgOpacity: 0.85,
     description: "Softened shadows",
   },
   dawn: {
     name: "Dawn",
-    icon: "🌅",
+    icon: "dawn",
     filter: "brightness(1.25) contrast(0.92) saturate(1.05)",
     bgOpacity: 0.7,
     description: "Gentle awakening",
@@ -108,7 +134,7 @@ export function ThemeSoftener() {
         whileTap={{ scale: 0.95 }}
         title="Change theme brightness (Shift+T)"
       >
-        <span className="text-lg">{THEMES[mode].icon}</span>
+        <ThemeIcon mode={mode} />
       </motion.button>
 
       {/* Theme Selector Panel */}
@@ -147,7 +173,7 @@ export function ThemeSoftener() {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">{config.icon}</span>
+                      <div className="text-foreground/60"><ThemeIcon mode={key} /></div>
                       <div>
                         <p className="text-sm font-medium text-foreground/80">
                           {config.name}

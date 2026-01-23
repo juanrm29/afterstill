@@ -368,12 +368,22 @@ export default function ConduitProvider() {
         
         // Clean up previous peer if exists
         if (peerRef.current) {
-          peerRef.current.destroy();
+          try {
+            peerRef.current.destroy();
+          } catch {
+            // Ignore destroy errors
+          }
         }
         
         // Create peer as altar with predictable ID
         const peer = new Peer(`altar-${roomCode}`, {
           debug: 0,
+          config: {
+            iceServers: [
+              { urls: "stun:stun.l.google.com:19302" },
+              { urls: "stun:stun1.l.google.com:19302" },
+            ],
+          },
         });
         peerRef.current = peer;
 
@@ -412,11 +422,12 @@ export default function ConduitProvider() {
 
         peer.on("error", (err) => {
           console.error("Peer error:", err);
-          // Retry on some errors
-          if (err.type === "unavailable-id" || err.type === "network") {
+          // Retry on some errors - with exponential backoff
+          const retryErrors = ["unavailable-id", "network", "server-error", "socket-error", "socket-closed"];
+          if (retryErrors.includes(err.type)) {
             retryTimeout = setTimeout(() => {
               if (mountedRef.current) initPeer();
-            }, 3000);
+            }, 5000);
           }
         });
         
