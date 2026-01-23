@@ -15,7 +15,7 @@ export type ConduitCommand =
   | { type: "gesture:tilt"; x: number; y: number }
   | { type: "gesture:tap"; count: number }
   | { type: "gesture:hold"; duration: number }
-  | { type: "gesture:draw"; shape: "circle" | "spiral" | "line" | "heart" | "infinity" }
+  | { type: "gesture:draw"; shape: "circle" | "spiral" | "line" | "heart" | "infinity" | "triangle" }
   
   // Atmosphere Control
   | { type: "atmosphere:brightness"; level: number }  // 0-100
