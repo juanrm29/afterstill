@@ -62,11 +62,12 @@ export function middleware(request: NextRequest) {
     response.headers.set(key, value);
   });
 
-  // Add CSP for non-API routes (more lenient for SSR)
-  if (!isApiRoute && process.env.NODE_ENV === "production") {
-    const { csp } = generateCSP();
-    response.headers.set("Content-Security-Policy", csp);
-  }
+  // CSP disabled - Next.js uses inline scripts that conflict with strict CSP
+  // TODO: Implement proper nonce-based CSP with Next.js headers
+  // if (!isApiRoute && process.env.NODE_ENV === "production") {
+  //   const { csp } = generateCSP();
+  //   response.headers.set("Content-Security-Policy", csp);
+  // }
 
   // Enhanced rate limiting
   if (!shouldSkipRateLimit) {
