@@ -202,10 +202,7 @@ export function MainNavbar({ siteName = "Afterstill" }: Readonly<NavbarProps>) {
 
   return (
     <>
-      <motion.header 
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      <header 
         className={`fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 md:px-8 lg:px-12 py-3 md:py-4 transition-all duration-500 ${
           isScrolled 
             ? "bg-zinc-950/80 backdrop-blur-xl" 
@@ -278,7 +275,7 @@ export function MainNavbar({ siteName = "Afterstill" }: Readonly<NavbarProps>) {
             </svg>
           </button>
         </div>
-      </motion.header>
+      </header>
 
       {/* Mobile Menu */}
       <MobileMenu 
