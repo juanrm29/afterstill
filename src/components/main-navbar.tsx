@@ -216,9 +216,7 @@ export function MainNavbar({ siteName = "Afterstill" }: Readonly<NavbarProps>) {
           {/* Logo with enhanced animation */}
           <Link 
             href="/"
-            className={`group relative flex items-center gap-3 ${
-              isLoaded ? "animate-fade-in" : "opacity-0"
-            }`}
+            className="group relative flex items-center gap-3 opacity-100"
           >
             {/* Ambient glow on hover */}
             <div className="absolute -inset-4 rounded-full bg-zinc-500/5 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-700" />
@@ -229,18 +227,14 @@ export function MainNavbar({ siteName = "Afterstill" }: Readonly<NavbarProps>) {
           </Link>
           
           {/* Enhanced Compact Calendar in Center - Desktop only */}
-          <div className={`hidden lg:flex items-center gap-0.5 ${
-            isLoaded ? "animate-fade-in" : "opacity-0"
-          }`}>
+          <div className="hidden lg:flex items-center gap-0.5 opacity-100">
             {weekDays.map((day) => (
               <DayItem key={day.day} day={day} />
             ))}
           </div>
 
           {/* Mobile date badge */}
-          <div className={`hidden sm:flex lg:hidden items-center gap-2 ${
-            isLoaded ? "animate-fade-in" : "opacity-0"
-          }`}>
+          <div className="hidden sm:flex lg:hidden items-center gap-2 opacity-100">
             <div className="px-3 py-1.5 rounded-full bg-zinc-800/40 border border-zinc-700/30">
               <span className="text-[10px] tracking-wider text-zinc-400 font-medium">
                 {todayInfo}
@@ -249,9 +243,7 @@ export function MainNavbar({ siteName = "Afterstill" }: Readonly<NavbarProps>) {
           </div>
           
           {/* Desktop Navigation */}
-          <nav className={`hidden md:flex items-center gap-6 ${
-            isLoaded ? "animate-fade-in" : "opacity-0"
-          }`}>
+          <nav className="hidden md:flex items-center gap-6 opacity-100">
             {[
               { href: "/fragment", label: "Fragments" },
               { href: "/archive", label: "Archive" },
@@ -278,9 +270,7 @@ export function MainNavbar({ siteName = "Afterstill" }: Readonly<NavbarProps>) {
           {/* Mobile menu button */}
           <button
             onClick={openMobileMenu}
-            className={`md:hidden p-2 -mr-2 rounded-lg hover:bg-zinc-800/50 transition-colors ${
-              isLoaded ? "animate-fade-in" : "opacity-0"
-            }`}
+            className="md:hidden p-2 -mr-2 rounded-lg hover:bg-zinc-800/50 transition-colors opacity-100"
             aria-label="Open menu"
           >
             <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
