@@ -118,11 +118,22 @@ export function useConsciousness() {
 }
 
 /**
- * Hook for temporal state only
+ * Hook for temporal state only (safe to use outside provider)
  */
 export function useTemporal() {
-  const { temporal, isHydrated } = useConsciousness();
-  return { ...temporal, isHydrated };
+  const context = useContext(ConsciousnessContext);
+  if (!context) {
+    // Return safe defaults when outside provider
+    return { 
+      phase: "evening" as TimePhase, 
+      isHydrated: false,
+      mood: "contemplative" as const,
+      colors: { primary: "#1a1a2e", secondary: "#16213e", accent: "#0f3460", glow: "#e94560" },
+      ambientIntensity: 0.5,
+      typography: { warmth: 0.5, contrast: 0.8 },
+    };
+  }
+  return { ...context.temporal, isHydrated: context.isHydrated };
 }
 
 /**
