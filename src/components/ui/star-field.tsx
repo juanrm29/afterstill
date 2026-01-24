@@ -12,8 +12,8 @@ interface Star {
 }
 
 interface StarFieldProps {
-  count?: number;
-  className?: string;
+  readonly count?: number;
+  readonly className?: string;
 }
 
 /**
@@ -64,10 +64,10 @@ interface ParticleConfig {
 }
 
 interface PhaseParticlesProps {
-  count?: number;
-  color: 'violet' | 'cyan' | 'amber' | 'orange';
-  active: boolean;
-  className?: string;
+  readonly count?: number;
+  readonly color: 'violet' | 'cyan' | 'amber' | 'orange';
+  readonly active: boolean;
+  readonly className?: string;
 }
 
 export function PhaseParticles({ 
@@ -119,10 +119,10 @@ export function PhaseParticles({
  * Signal bars for radio component
  */
 interface SignalBarsProps {
-  levels: number[];
-  phase: string;
-  isHover: boolean;
-  className?: string;
+  readonly levels: readonly number[];
+  readonly phase: string;
+  readonly isHover: boolean;
+  readonly className?: string;
 }
 
 export function SignalBars({ levels, phase, isHover, className = '' }: SignalBarsProps) {

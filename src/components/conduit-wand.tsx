@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   type ConduitCommand,
@@ -12,6 +12,8 @@ import {
   detectShake,
   detectShape,
 } from "@/lib/conduit-protocol";
+import type { DataConnection } from "peerjs";
+import type Peer from "peerjs";
 
 type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
 type WandMode = "gesture" | "reading" | "oracle" | "drawing" | "whisper";
@@ -26,10 +28,25 @@ interface WandState {
   voidResponse: { message: string; quote?: string } | null;
 }
 
+interface ConduitWandProps {
+  readonly roomCode: string;
+}
+
+// Status color helper
+function getStatusColor(status: ConnectionStatus): string {
+  switch (status) {
+    case "connected": return "#22c55e";
+    case "connecting": return "#eab308";
+    case "disconnected": return "#6b7280";
+    case "error": return "#ef4444";
+    default: return "#6b7280";
+  }
+}
+
 /**
  * ConduitWand - Mobile controller for desktop experience
  */
-export function ConduitWand({ roomCode }: { roomCode: string }) {
+export function ConduitWand({ roomCode }: ConduitWandProps) {
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [state, setState] = useState<WandState>({
     mode: "gesture",
@@ -43,8 +60,8 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
   const [needsPermission, setNeedsPermission] = useState(false);
   const [whisperText, setWhisperText] = useState("");
   
-  const peerRef = useRef<any>(null);
-  const connRef = useRef<any>(null);
+  const peerRef = useRef<Peer | null>(null);
+  const connRef = useRef<DataConnection | null>(null);
   
   // Touch tracking
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
@@ -66,8 +83,7 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
       }
     }
   }, [status]);
-  
-  // Handle response from desktop
+  // Handle response from desktop  
   const handleResponse = useCallback((response: ConduitResponse) => {
     switch (response.type) {
       case "connected":
@@ -110,18 +126,53 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
     }
   }, []);
   
+  // Setup connection handlers (extracted to reduce nesting)
+  const setupConnectionHandlers = useCallback((conn: DataConnection, mounted: { value: boolean }) => {
+    conn.on("open", () => {
+      if (!mounted.value) return;
+      setStatus("connected");
+      
+      // Send handshake
+      const deviceInfo: DeviceInfo = {
+        type: globalThis.innerWidth < 768 ? "mobile" : "tablet",
+        hasGyroscope: "DeviceOrientationEvent" in globalThis,
+        hasAccelerometer: "DeviceMotionEvent" in globalThis,
+        hasVibration: "vibrate" in navigator,
+        screenWidth: globalThis.innerWidth,
+        screenHeight: globalThis.innerHeight,
+      };
+      
+      conn.send({ type: "handshake", deviceInfo });
+    });
+    
+    conn.on("data", (data: unknown) => {
+      handleResponse(data as ConduitResponse);
+    });
+    
+    conn.on("close", () => {
+      if (!mounted.value) return;
+      setStatus("disconnected");
+    });
+    
+    conn.on("error", () => {
+      if (!mounted.value) return;
+      setStatus("error");
+    });
+  }, [handleResponse]);
+
   // Initialize PeerJS connection
   useEffect(() => {
     if (!roomCode) return;
     
-    let mounted = true;
+    const mounted = { value: true };
     
     const initPeer = async () => {
       try {
-        const Peer = (await import("peerjs")).default;
+        const PeerModule = await import("peerjs");
+        const PeerClass = PeerModule.default;
         
         const peerId = `wand-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-        const peer = new Peer(peerId, { 
+        const peer = new PeerClass(peerId, { 
           debug: 0,
           config: {
             iceServers: [
@@ -133,52 +184,23 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
         peerRef.current = peer;
         
         peer.on("open", () => {
-          if (!mounted) return;
+          if (!mounted.value) return;
           
           const conn = peer.connect(`altar-${roomCode}`, { reliable: true });
           connRef.current = conn;
           
-          conn.on("open", () => {
-            if (!mounted) return;
-            setStatus("connected");
-            
-            // Send handshake
-            const deviceInfo: DeviceInfo = {
-              type: window.innerWidth < 768 ? "mobile" : "tablet",
-              hasGyroscope: "DeviceOrientationEvent" in window,
-              hasAccelerometer: "DeviceMotionEvent" in window,
-              hasVibration: "vibrate" in navigator,
-              screenWidth: window.innerWidth,
-              screenHeight: window.innerHeight,
-            };
-            
-            conn.send({ type: "handshake", deviceInfo });
-          });
-          
-          conn.on("data", (data: unknown) => {
-            handleResponse(data as ConduitResponse);
-          });
-          
-          conn.on("close", () => {
-            if (!mounted) return;
-            setStatus("disconnected");
-          });
-          
-          conn.on("error", () => {
-            if (!mounted) return;
-            setStatus("error");
-          });
+          setupConnectionHandlers(conn, mounted);
         });
         
         peer.on("error", (err) => {
           console.error("Peer error:", err);
-          if (!mounted) return;
+          if (!mounted.value) return;
           setStatus("error");
         });
         
       } catch (err) {
         console.error("PeerJS error:", err);
-        if (!mounted) return;
+        if (!mounted.value) return;
         setStatus("error");
       }
     };
@@ -186,19 +208,18 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
     initPeer();
     
     return () => {
-      mounted = false;
+      mounted.value = false;
       if (connRef.current) connRef.current.close();
       if (peerRef.current) peerRef.current.destroy();
     };
-  }, [roomCode, handleResponse]);
+  }, [roomCode, handleResponse, setupConnectionHandlers]);
   
   // Check iOS permission
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const DeviceMotion = DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> };
-      if (typeof DeviceMotion.requestPermission === "function") {
-        setNeedsPermission(true);
-      }
+    if (globalThis.window === undefined) return;
+    const DeviceMotion = DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> };
+    if (typeof DeviceMotion.requestPermission === "function") {
+      setNeedsPermission(true);
     }
   }, []);
   
@@ -227,7 +248,7 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
     // Shake detection
     const handleMotion = (event: DeviceMotionEvent) => {
       const acc = event.accelerationIncludingGravity;
-      if (!acc || acc.x === null || acc.y === null || acc.z === null) return;
+      if (!acc?.x || !acc?.y || !acc?.z) return;
       
       const current = { x: acc.x, y: acc.y, z: acc.z };
       const { isShake, intensity } = detectShake(current, lastAccelRef.current);
@@ -264,12 +285,12 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
       }
     };
     
-    window.addEventListener("devicemotion", handleMotion);
-    window.addEventListener("deviceorientation", handleOrientation);
+    globalThis.addEventListener("devicemotion", handleMotion);
+    globalThis.addEventListener("deviceorientation", handleOrientation);
     
     return () => {
-      window.removeEventListener("devicemotion", handleMotion);
-      window.removeEventListener("deviceorientation", handleOrientation);
+      globalThis.removeEventListener("devicemotion", handleMotion);
+      globalThis.removeEventListener("deviceorientation", handleOrientation);
     };
   }, [needsPermission, status, sendCommand]);
   
@@ -364,6 +385,9 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
     setWhisperText("");
     setState(prev => ({ ...prev, mode: "oracle", lastGesture: "whisper" }));
   };
+
+  // Memoize status color to avoid nested ternary
+  const statusColor = useMemo(() => getStatusColor(status), [status]);
   
   // Render
   return (
@@ -374,36 +398,45 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
       onTouchEnd={handleTouchEnd}
     >
       {/* Status bar */}
-      <header className="p-4 border-b border-white/10">
+      <header className="safe-area-inset-top p-4 border-b border-white/10 bg-zinc-950/50 backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <motion.div
               animate={{
                 scale: status === "connected" ? [1, 1.2, 1] : 1,
-                backgroundColor: status === "connected" ? "#22c55e" : 
-                  status === "connecting" ? "#eab308" : "#ef4444",
+                backgroundColor: statusColor,
               }}
               transition={{ repeat: status === "connecting" ? Infinity : 0, duration: 1 }}
-              className="w-2 h-2 rounded-full"
+              className="w-2.5 h-2.5 rounded-full"
             />
-            <span className="text-[10px] font-mono tracking-wider text-white/50 uppercase">
-              {status}
+            <span className="text-[11px] font-mono tracking-wider text-white/60 uppercase">
+              {status === "connecting" ? "Connecting..." : status}
             </span>
           </div>
-          <span className="text-[9px] font-mono text-white/30">{roomCode}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-white/30 px-2 py-1 rounded bg-white/5">
+              {roomCode}
+            </span>
+          </div>
         </div>
       </header>
       
       {/* Main gesture area */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 relative">
+      <main className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {/* Ambient background */}
+        <div className="absolute inset-0 bg-linear-to-b from-transparent via-purple-950/10 to-transparent pointer-events-none" />
+        
         {/* Permission request */}
         {needsPermission && (
           <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
             onClick={requestPermission}
-            className="absolute top-4 left-4 right-4 py-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-200 text-sm"
+            className="absolute top-4 left-4 right-4 py-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200 text-sm font-medium flex items-center justify-center gap-2"
           >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+            </svg>
             Enable motion sensors
           </motion.button>
         )}
@@ -416,24 +449,25 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="mb-8 text-center"
+              className="mb-8 text-center px-4"
             >
-              <p className="text-[10px] font-mono text-white/30 mb-2">CURRENT</p>
-              <h2 className="text-lg" style={{ fontFamily: "var(--font-cormorant), serif" }}>
+              <p className="text-[10px] font-mono text-white/40 tracking-widest mb-2">CURRENT WRITING</p>
+              <h2 className="text-xl text-white/90" style={{ fontFamily: "var(--font-cormorant), serif" }}>
                 {state.currentWriting.title}
               </h2>
               
               {/* Reading progress */}
               {state.mode === "reading" && (
-                <div className="mt-4 w-full max-w-[200px] mx-auto">
-                  <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="mt-4 w-full max-w-52 mx-auto">
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <motion.div
-                      className="h-full bg-white/50"
+                      className="h-full bg-linear-to-r from-white/30 to-white/60"
                       animate={{ width: `${state.readingProgress}%` }}
+                      transition={{ type: "spring", stiffness: 100, damping: 20 }}
                     />
                   </div>
-                  <p className="text-[10px] font-mono text-white/30 mt-1">
-                    {Math.round(state.readingProgress)}%
+                  <p className="text-[10px] font-mono text-white/40 mt-2">
+                    {Math.round(state.readingProgress)}% read
                   </p>
                 </div>
               )}
@@ -544,7 +578,7 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
               </p>
               {state.voidResponse.quote && (
                 <p className="text-[10px] text-purple-300/50 mt-3 text-center italic">
-                  "{state.voidResponse.quote}"
+                  &ldquo;{state.voidResponse.quote}&rdquo;
                 </p>
               )}
               <button
@@ -570,7 +604,7 @@ export function ConduitWand({ roomCode }: { roomCode: string }) {
               value={whisperText}
               onChange={(e) => setWhisperText(e.target.value)}
               placeholder="Your question..."
-              className="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-white/40"
+              className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-white/40"
               onKeyDown={(e) => e.key === "Enter" && sendWhisper()}
               autoFocus
             />

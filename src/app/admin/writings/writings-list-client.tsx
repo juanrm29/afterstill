@@ -21,11 +21,10 @@ interface Writing {
 }
 
 interface Props {
-  writings: Writing[];
-  tags: Tag[];
+  readonly writings: readonly Writing[];
 }
 
-export default function WritingsListClient({ writings, tags }: Props) {
+export default function WritingsListClient({ writings }: Props) {
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
 
@@ -179,7 +178,7 @@ export default function WritingsListClient({ writings, tags }: Props) {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status }: { readonly status: string }) {
   const colors = {
     DRAFT: "bg-zinc-800/50 text-zinc-500 border-zinc-700/30",
     PUBLISHED: "bg-emerald-950/30 text-emerald-500/80 border-emerald-800/30",

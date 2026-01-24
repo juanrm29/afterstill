@@ -65,7 +65,7 @@ function scoreWritingForMood(writing: Writing, mood: MoodType): number {
   return score;
 }
 
-export function MoodRecommendation({ writings }: { writings: Writing[] }) {
+export function MoodRecommendation({ writings }: { readonly writings: readonly Writing[] }) {
   const [mood] = useState<MoodType>(() => getTimeBasedMood());
   const [isVisible, setIsVisible] = useState(false);
   const [userMood, setUserMood] = useState<MoodType | null>(null);

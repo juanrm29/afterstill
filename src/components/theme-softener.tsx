@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, createContext, useContext, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type ThemeMode = "midnight" | "twilight" | "dawn";
+export type ThemeMode = "midnight" | "twilight" | "dawn";
 
 interface ThemeConfig {
   name: string;
@@ -13,11 +13,28 @@ interface ThemeConfig {
   description: string;
 }
 
+// Theme context for sharing state
+interface ThemeContextValue {
+  mode: ThemeMode;
+  changeTheme: (mode: ThemeMode) => void;
+  cycleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextValue | null>(null);
+
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    return { mode: "midnight" as ThemeMode, changeTheme: () => {}, cycleTheme: () => {} };
+  }
+  return context;
+}
+
 // SVG Icons for themes
-const ThemeIcon = ({ mode }: { mode: ThemeMode }) => {
+export const ThemeIcon = ({ mode, className = "w-4 h-4" }: { mode: ThemeMode; className?: string }) => {
   if (mode === "midnight") {
     return (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="12" cy="12" r="4" />
         <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
       </svg>
@@ -25,13 +42,13 @@ const ThemeIcon = ({ mode }: { mode: ThemeMode }) => {
   }
   if (mode === "twilight") {
     return (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
       </svg>
     );
   }
   return (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M12 3v1M12 20v1M4.22 4.22l.7.7M18.36 18.36l.7.7M1 12h1M22 12h1M4.22 19.78l.7-.7M18.36 5.64l.7-.7" />
       <circle cx="12" cy="12" r="5" />
       <path d="M12 7v0M12 17v0" />
@@ -65,6 +82,75 @@ const THEMES: Record<ThemeMode, ThemeConfig> = {
 
 const STORAGE_KEY = "afterstill-theme-mode";
 
+// Navbar Theme Toggle - Compact for navbar
+// Standalone theme toggle that works outside ThemeContext
+export function NavbarThemeToggle() {
+  const [mode, setMode] = useState<ThemeMode>("midnight");
+  const [mounted, setMounted] = useState(false);
+
+  // Load and apply theme on mount
+  useEffect(() => {
+    setMounted(true);
+    const saved = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
+    if (saved && THEMES[saved]) {
+      setMode(saved);
+      applyThemeToDOM(saved);
+    }
+  }, []);
+
+  const cycleTheme = useCallback(() => {
+    const modes: ThemeMode[] = ["midnight", "twilight", "dawn"];
+    const currentIndex = modes.indexOf(mode);
+    const nextMode = modes[(currentIndex + 1) % modes.length];
+    setMode(nextMode);
+    localStorage.setItem(STORAGE_KEY, nextMode);
+    applyThemeToDOM(nextMode);
+  }, [mode]);
+
+  if (!mounted) return null;
+
+  return (
+    <motion.button
+      onClick={cycleTheme}
+      className="relative flex items-center justify-center w-8 h-8 rounded-full border border-zinc-700/50 bg-zinc-900/50 hover:border-zinc-500/50 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer"
+      whileHover={{ scale: 1.08 }}
+      whileTap={{ scale: 0.92 }}
+      title={`Theme: ${THEMES[mode].name} (Shift+T to cycle)`}
+    >
+      <motion.div
+        key={mode}
+        initial={{ rotate: -30, opacity: 0 }}
+        animate={{ rotate: 0, opacity: 1 }}
+        exit={{ rotate: 30, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="text-zinc-400"
+      >
+        <ThemeIcon mode={mode} className="w-3.5 h-3.5" />
+      </motion.div>
+    </motion.button>
+  );
+}
+
+// Apply theme to document - standalone function
+function applyThemeToDOM(newMode: ThemeMode) {
+  const config = THEMES[newMode];
+  const root = document.documentElement;
+  
+  // Apply CSS filter to main content (not fixed elements)
+  root.style.setProperty("--theme-filter", config.filter);
+  root.style.setProperty("--theme-bg-opacity", config.bgOpacity.toString());
+  
+  // Add/remove class for additional CSS hooks
+  root.classList.remove("theme-midnight", "theme-twilight", "theme-dawn");
+  root.classList.add(`theme-${newMode}`);
+  
+  // Apply filter to body's children, not body itself (to avoid affecting fixed overlays)
+  const mainContent = document.querySelector("main");
+  if (mainContent) {
+    mainContent.style.filter = config.filter;
+  }
+}
+
 export function ThemeSoftener() {
   const [mode, setMode] = useState<ThemeMode>("midnight");
   const [isOpen, setIsOpen] = useState(false);
@@ -76,68 +162,50 @@ export function ThemeSoftener() {
     const saved = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
     if (saved && THEMES[saved]) {
       setMode(saved);
-      applyTheme(saved);
-    }
-  }, []);
-
-  // Apply theme to document
-  const applyTheme = useCallback((newMode: ThemeMode) => {
-    const config = THEMES[newMode];
-    const root = document.documentElement;
-    
-    // Apply CSS filter to main content (not fixed elements)
-    root.style.setProperty("--theme-filter", config.filter);
-    root.style.setProperty("--theme-bg-opacity", config.bgOpacity.toString());
-    
-    // Add/remove class for additional CSS hooks
-    root.classList.remove("theme-midnight", "theme-twilight", "theme-dawn");
-    root.classList.add(`theme-${newMode}`);
-    
-    // Apply filter to body's children, not body itself (to avoid affecting fixed overlays)
-    const mainContent = document.querySelector("main");
-    if (mainContent) {
-      (mainContent as HTMLElement).style.filter = config.filter;
+      applyThemeToDOM(saved);
     }
   }, []);
 
   const changeTheme = useCallback((newMode: ThemeMode) => {
     setMode(newMode);
     localStorage.setItem(STORAGE_KEY, newMode);
-    applyTheme(newMode);
+    applyThemeToDOM(newMode);
     setIsOpen(false);
-  }, [applyTheme]);
+  }, []);
+
+  const cycleTheme = useCallback(() => {
+    const modes: ThemeMode[] = ["midnight", "twilight", "dawn"];
+    const currentIndex = modes.indexOf(mode);
+    const nextMode = modes[(currentIndex + 1) % modes.length];
+    changeTheme(nextMode);
+  }, [mode, changeTheme]);
 
   // Keyboard shortcut: Shift + T to cycle themes
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.shiftKey && e.key === "T") {
-        const modes: ThemeMode[] = ["midnight", "twilight", "dawn"];
-        const currentIndex = modes.indexOf(mode);
-        const nextMode = modes[(currentIndex + 1) % modes.length];
-        changeTheme(nextMode);
+        cycleTheme();
       }
     };
     
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [mode, changeTheme]);
+    globalThis.addEventListener("keydown", handleKey);
+    return () => globalThis.removeEventListener("keydown", handleKey);
+  }, [cycleTheme]);
+
+  // Memoize context value
+  const contextValue = useMemo(() => ({
+    mode,
+    changeTheme,
+    cycleTheme,
+  }), [mode, changeTheme, cycleTheme]);
 
   if (!mounted) return null;
 
   return (
-    <>
-      {/* Theme Toggle Button */}
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-6 right-6 z-[150] w-10 h-10 rounded-full border border-foreground/10 bg-background/50 backdrop-blur-md flex items-center justify-center hover:border-foreground/20 transition-colors"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        title="Change theme brightness (Shift+T)"
-      >
-        <ThemeIcon mode={mode} />
-      </motion.button>
-
-      {/* Theme Selector Panel */}
+    <ThemeContext.Provider value={contextValue}>
+      {/* Render children so NavbarThemeToggle has context */}
+      
+      {/* Theme Selector Panel - Hidden, accessed via navbar */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -147,7 +215,7 @@ export function ThemeSoftener() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 z-[149] bg-black/20 backdrop-blur-sm"
+              className="fixed inset-0 z-149 bg-black/20 backdrop-blur-sm"
             />
             
             {/* Panel */}
@@ -155,7 +223,7 @@ export function ThemeSoftener() {
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="fixed top-20 right-6 z-[150] w-64 p-4 rounded-xl border border-foreground/10 bg-background/95 backdrop-blur-xl shadow-2xl"
+              className="fixed top-20 right-6 z-150 w-64 p-4 rounded-xl border border-foreground/10 bg-background/95 backdrop-blur-xl shadow-2xl"
             >
               <p className="text-[9px] font-mono tracking-[0.3em] uppercase text-foreground/40 mb-3">
                 Atmosphere
@@ -200,6 +268,6 @@ export function ThemeSoftener() {
           </>
         )}
       </AnimatePresence>
-    </>
+    </ThemeContext.Provider>
   );
 }

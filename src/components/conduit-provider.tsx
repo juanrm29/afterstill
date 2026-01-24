@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef, useCallback, createContext, useContext } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
-import AmbientMusic from "./ambient-music";
 import { type ConduitCommand, type ConduitResponse, type WritingPreview } from "@/lib/conduit-protocol";
 
 type ConnectionStatus = "waiting" | "connected" | "disconnected";
@@ -87,7 +86,8 @@ export default function ConduitProvider() {
 
   // Generate room code once
   useEffect(() => {
-    const code = `${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    // More unique code with timestamp suffix
+    const code = `${Math.random().toString(36).slice(2, 6).toUpperCase()}${Date.now().toString(36).slice(-2).toUpperCase()}`;
     setRoomCode(code);
     
     return () => {
@@ -422,8 +422,24 @@ export default function ConduitProvider() {
 
         peer.on("error", (err) => {
           console.error("Peer error:", err);
-          // Retry on some errors - with exponential backoff
-          const retryErrors = ["unavailable-id", "network", "server-error", "socket-error", "socket-closed"];
+          // Handle "unavailable-id" by generating new room code
+          if (err.type === "unavailable-id") {
+            // ID is taken - destroy current peer and generate new code
+            if (peerRef.current) {
+              try {
+                peerRef.current.destroy();
+              } catch {
+                // Ignore destroy errors
+              }
+              peerRef.current = null;
+            }
+            // Generate new room code to avoid conflict
+            const newCode = `${Math.random().toString(36).slice(2, 6).toUpperCase()}${Date.now().toString(36).slice(-2).toUpperCase()}`;
+            setRoomCode(newCode);
+            return;
+          }
+          // Retry on other connection errors
+          const retryErrors = ["network", "server-error", "socket-error", "socket-closed"];
           if (retryErrors.includes(err.type)) {
             retryTimeout = setTimeout(() => {
               if (mountedRef.current) initPeer();
@@ -447,7 +463,15 @@ export default function ConduitProvider() {
 
     return () => {
       clearTimeout(retryTimeout);
-      // Don't destroy peer on unmount - keep connection alive
+      // Destroy peer on effect cleanup to avoid stale connections
+      if (peerRef.current) {
+        try {
+          peerRef.current.destroy();
+        } catch {
+          // Ignore
+        }
+        peerRef.current = null;
+      }
     };
   }, [roomCode, isConduitPage, handleCommand]);
 
@@ -474,13 +498,13 @@ export default function ConduitProvider() {
     <ConduitContext.Provider value={contextValue}>
       {/* Shake overlay effect */}
       {shakeEffect && (
-        <div className="fixed inset-0 z-[300] pointer-events-none animate-conduit-shake bg-white/5" />
+        <div className="fixed inset-0 z-300 pointer-events-none animate-conduit-shake bg-white/5" />
       )}
       
       {/* Feedback message overlay */}
       {feedbackMessage && (
         <div 
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[400] 
+          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-400 
                      px-6 py-4 rounded-2xl border border-white/20 bg-black/80 backdrop-blur-xl
                      text-white text-center pointer-events-none"
           style={{ 
@@ -492,8 +516,8 @@ export default function ConduitProvider() {
         </div>
       )}
       
-      {/* Conduit Panel */}
-      <div className="fixed bottom-6 left-6 z-[200]">
+      {/* Conduit Panel - positioned above reading progress */}
+      <div className="fixed bottom-20 left-6 z-200">
         {/* Collapsed - mysterious icon */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -618,9 +642,6 @@ export default function ConduitProvider() {
           }
         `}</style>
       </div>
-      
-      {/* Ambient Music - always available */}
-      <AmbientMusic />
     </ConduitContext.Provider>
   );
 }

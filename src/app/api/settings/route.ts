@@ -4,7 +4,7 @@ import prisma from "@/lib/db";
 // GET /api/settings - Get public site settings (no auth required)
 export async function GET() {
   try {
-    let settings = await prisma.siteSettings.findUnique({
+    const settings = await prisma.siteSettings.findUnique({
       where: { id: "main" },
     });
 

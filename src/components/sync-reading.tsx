@@ -85,7 +85,7 @@ export function SyncReading({ writing }: SyncReadingProps) {
   if (!conduit?.isConnected) return null;
   
   return (
-    <div ref={containerRef} className="fixed bottom-4 right-4 z-50">
+    <div ref={containerRef} className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-green-500/20 bg-green-500/5 backdrop-blur-sm">
         <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
         <span className="text-[9px] font-mono text-green-500/70 uppercase tracking-wider">

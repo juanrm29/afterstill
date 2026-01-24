@@ -2,13 +2,13 @@
   "name": "Afterstill",
   "short_name": "Afterstill",
   "description": "A mindblowing, aesthetic literacy showcase with an intelligent discovery and reading experience",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "id": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
   "background_color": "#030304",
   "theme_color": "#030304",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -40,13 +40,15 @@
       "src": "/screenshot-desktop.png",
       "sizes": "1920x1080",
       "type": "image/png",
-      "form_factor": "wide"
+      "form_factor": "wide",
+      "label": "Afterstill Desktop Experience"
     },
     {
       "src": "/screenshot-mobile.png",
       "sizes": "375x812",
       "type": "image/png",
-      "form_factor": "narrow"
+      "form_factor": "narrow",
+      "label": "Afterstill Mobile Experience"
     }
   ],
   "shortcuts": [
@@ -54,29 +56,52 @@
       "name": "Read Latest",
       "short_name": "Read",
       "description": "Jump to the latest writing",
-      "url": "/archive",
+      "url": "/archive?source=shortcut",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Explore Atlas",
       "short_name": "Atlas",
       "description": "Explore the semantic graph",
-      "url": "/atlas",
+      "url": "/atlas?source=shortcut",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Consult Oracle",
       "short_name": "Oracle",
       "description": "Let the universe choose a writing for you",
-      "url": "/conduit",
+      "url": "/conduit?source=shortcut",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "About",
+      "short_name": "About",
+      "description": "Learn about Afterstill",
+      "url": "/about?source=shortcut",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ],
-  "categories": ["books", "education", "entertainment", "lifestyle"],
+  "categories": ["books", "education", "entertainment", "lifestyle", "magazines"],
   "lang": "id",
   "dir": "ltr",
   "scope": "/",
   "prefer_related_applications": false,
   "related_applications": [],
-  "handle_links": "preferred"
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

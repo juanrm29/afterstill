@@ -124,14 +124,25 @@ const cosineArray = (a: number[], b: number[]) => {
 };
 
 const kMeansCosine = (vectors: number[][], k: number) => {
-  const centroids = vectors.slice(0, k).map((vec) => [...vec]);
+  // Handle empty vectors array
+  if (vectors.length === 0) {
+    return [];
+  }
+  
+  // Ensure k is not larger than the number of vectors
+  const actualK = Math.min(k, vectors.length);
+  if (actualK === 0) {
+    return [];
+  }
+  
+  const centroids = vectors.slice(0, actualK).map((vec) => [...vec]);
   const assignments = new Array(vectors.length).fill(0);
 
   for (let iteration = 0; iteration < 6; iteration += 1) {
     for (let i = 0; i < vectors.length; i += 1) {
       let bestIndex = 0;
       let bestScore = -Infinity;
-      for (let c = 0; c < k; c += 1) {
+      for (let c = 0; c < actualK; c += 1) {
         const score = cosineArray(vectors[i], centroids[c]);
         if (score > bestScore) {
           bestScore = score;
@@ -141,10 +152,11 @@ const kMeansCosine = (vectors: number[][], k: number) => {
       assignments[i] = bestIndex;
     }
 
-    const sums = Array.from({ length: k }, () =>
-      new Array(vectors[0].length).fill(0)
+    const vectorDim = vectors[0]?.length ?? 0;
+    const sums = Array.from({ length: actualK }, () =>
+      new Array(vectorDim).fill(0)
     );
-    const counts = new Array(k).fill(0);
+    const counts = new Array(actualK).fill(0);
     for (let i = 0; i < vectors.length; i += 1) {
       const cluster = assignments[i];
       counts[cluster] += 1;
@@ -152,7 +164,7 @@ const kMeansCosine = (vectors: number[][], k: number) => {
         sums[cluster][j] += vectors[i][j];
       }
     }
-    for (let c = 0; c < k; c += 1) {
+    for (let c = 0; c < actualK; c += 1) {
       if (counts[c] === 0) continue;
       for (let j = 0; j < sums[c].length; j += 1) {
         sums[c][j] /= counts[c];

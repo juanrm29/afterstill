@@ -5,23 +5,19 @@ import ConduitProvider from "@/components/conduit-provider";
 import PortalTransitionProvider from "@/components/portal-transition";
 import { ReadingModeProvider } from "@/components/reading-mode";
 import { PWAProvider } from "@/components/pwa-provider";
+import { PWAUI } from "@/components/pwa-ui";
 import { ConsciousnessProvider } from "@/components/consciousness-provider";
 import { TemporalGlow, TemporalWelcome } from "@/components/temporal-ui";
-import { ProceduralAmbientPlayer } from "@/components/procedural-ambient";
 import { PresenceGlow } from "@/components/presence-indicator";
 import { KeyboardRitualsProvider } from "@/components/keyboard-rituals-provider";
 import { ThemeSoftener } from "@/components/theme-softener";
+import { FloatingOrbs } from "@/components/visual-effects";
+import { ToastProvider } from "@/components/toast";
 import {
   generateSEOMetadata,
   generateOrganizationSchema,
   generateWebsiteSchema,
 } from "@/lib/seo";
-import { setupGlobalErrorHandler } from "@/lib/error-handling";
-
-// Setup error handling
-if (typeof window !== "undefined") {
-  setupGlobalErrorHandler();
-}
 
 const inter = Inter({
   variable: "--font-inter",
@@ -114,23 +110,27 @@ export default function RootLayout({
           Skip to main content
         </a>
         
-        <PWAProvider />
-        <ThemeSoftener />
-        <ConsciousnessProvider>
-          <TemporalGlow />
-          <PresenceGlow />
-          <KeyboardRitualsProvider>
-            <ReadingModeProvider>
-              <ConduitProvider />
-              <PortalTransitionProvider>
-                <main id="main-content" tabIndex={-1}>
-                  {children}
-                </main>
-              </PortalTransitionProvider>
-            </ReadingModeProvider>
-          </KeyboardRitualsProvider>
-          <ProceduralAmbientPlayer />
-        </ConsciousnessProvider>
+        <PWAProvider>
+          <ThemeSoftener />
+          <FloatingOrbs count={4} />
+          <PWAUI />
+          <ConsciousnessProvider>
+            <ToastProvider>
+            <TemporalGlow />
+            <PresenceGlow />
+            <KeyboardRitualsProvider>
+              <ReadingModeProvider>
+                <ConduitProvider />
+                <PortalTransitionProvider>
+                  <main id="main-content" tabIndex={-1}>
+                    {children}
+                  </main>
+                </PortalTransitionProvider>
+              </ReadingModeProvider>
+            </KeyboardRitualsProvider>
+            </ToastProvider>
+          </ConsciousnessProvider>
+        </PWAProvider>
       </body>
     </html>
   );

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, mockFetch } from './setup';
+import { describe, it, expect, mockFetch } from './setup';
 
 describe('API Endpoints', () => {
   describe('/api/health', () => {

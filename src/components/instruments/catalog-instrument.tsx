@@ -6,10 +6,10 @@ import { triggerPortal } from "@/components/portal-transition";
 type CatalogPhase = "idle" | "shuffling" | "sorting" | "found" | "opening";
 
 interface CatalogInstrumentProps {
-  enabled: boolean;
-  isAnyActive: boolean;
-  isLoaded: boolean;
-  onPhaseChange?: (phase: CatalogPhase) => void;
+  readonly enabled: boolean;
+  readonly isAnyActive: boolean;
+  readonly isLoaded: boolean;
+  readonly onPhaseChange?: (phase: CatalogPhase) => void;
 }
 
 export function CatalogInstrument({
@@ -141,23 +141,29 @@ export function CatalogInstrument({
       onMouseMove={(e) => hover && handleTilt(e)}
     >
       {/* Card glow effect */}
-      <div className={`absolute -inset-0.5 rounded-3xl transition-all duration-700 ${
-        isActive 
-          ? "bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent opacity-100 blur-xl" 
-          : hover 
-            ? "bg-gradient-to-br from-amber-500/10 via-transparent to-transparent opacity-100 blur-lg"
-            : "opacity-0"
-      }`} />
+      {(() => {
+        const getGlowClass = () => {
+          if (isActive) return "bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent opacity-100 blur-xl";
+          if (hover) return "bg-gradient-to-br from-amber-500/10 via-transparent to-transparent opacity-100 blur-lg";
+          return "opacity-0";
+        };
+        return <div className={`absolute -inset-0.5 rounded-3xl transition-all duration-700 ${getGlowClass()}`} />;
+      })()}
       
       <div className={`relative rounded-3xl border transition-all duration-500 p-6 sm:p-8 h-full flex flex-col overflow-hidden ${
         showEffects
-          ? "border-amber-500/20 bg-gradient-to-b from-zinc-900/90 via-zinc-900/80 to-zinc-950/90 shadow-2xl shadow-amber-500/5" 
-          : "border-zinc-800/40 bg-gradient-to-b from-zinc-900/60 to-zinc-950/60"
+          ? "border-amber-500/20 bg-linear-to-b from-zinc-900/90 via-zinc-900/80 to-zinc-950/90 shadow-2xl shadow-amber-500/5" 
+          : "border-zinc-800/40 bg-linear-to-b from-zinc-900/60 to-zinc-950/60"
       }`}>
         {/* Inner glow */}
-        <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full transition-all duration-700 ${
-          isActive ? "bg-amber-500/10 blur-3xl" : hover ? "bg-amber-500/5 blur-2xl" : "bg-transparent"
-        }`} />
+        {(() => {
+          const getInnerGlowClass = () => {
+            if (isActive) return "bg-amber-500/10 blur-3xl";
+            if (hover) return "bg-amber-500/5 blur-2xl";
+            return "bg-transparent";
+          };
+          return <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full transition-all duration-700 ${getInnerGlowClass()}`} />;
+        })()}
         
         <div className="h-36 sm:h-40 relative flex items-center justify-center mb-4">
           {/* Card stack */}
@@ -165,20 +171,22 @@ export function CatalogInstrument({
             {[0, 1, 2, 3, 4].map((i) => {
               const isActiveCard = i === activeCardIndex;
               const isFound = phase === "found" || phase === "opening";
-              const yOffset = isFound && i === 2 ? -cardElevation : (isActiveCard && phase === "sorting" ? -20 : 0);
+              const getYOffset = () => {
+                if (isFound && i === 2) return -cardElevation;
+                if (isActiveCard && phase === "sorting") return -20;
+                return 0;
+              };
+              const yOffset = getYOffset();
               
               return (
                 <div
                   key={`card-${i}`}
-                  className={`absolute top-1/2 left-1/2 w-14 h-20 rounded-sm border transition-all ${
-                    isFound && i === 2
-                      ? "bg-amber-800/40 border-amber-400/50 shadow-lg shadow-amber-500/20"
-                      : isActiveCard && phase === "sorting"
-                        ? "bg-amber-900/30 border-amber-500/30"
-                        : showEffects
-                          ? "bg-zinc-800/80 border-zinc-700/40"
-                          : "bg-zinc-900/50 border-zinc-800/20"
-                  }`}
+                  className={`absolute top-1/2 left-1/2 w-14 h-20 rounded-sm border transition-all ${(() => {
+                    if (isFound && i === 2) return "bg-amber-800/40 border-amber-400/50 shadow-lg shadow-amber-500/20";
+                    if (isActiveCard && phase === "sorting") return "bg-amber-900/30 border-amber-500/30";
+                    if (showEffects) return "bg-zinc-800/80 border-zinc-700/40";
+                    return "bg-zinc-900/50 border-zinc-800/20";
+                  })()}`}
                   style={{
                     transform: `translate(-50%, -50%) rotate(${cardRotations[i]}deg) translateY(${yOffset}px)`,
                     transformOrigin: "center 120%",
@@ -201,9 +209,14 @@ export function CatalogInstrument({
             })}
             
             {/* Shadow */}
-            <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-20 h-4 rounded-full blur-md transition-all duration-300 ${
-              isActive ? "bg-amber-500/15" : hover ? "bg-zinc-600/10" : "bg-zinc-800/5"
-            }`} />
+            {(() => {
+              const getShadowClass = () => {
+                if (isActive) return "bg-amber-500/15";
+                if (hover) return "bg-zinc-600/10";
+                return "bg-zinc-800/5";
+              };
+              return <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-20 h-4 rounded-full blur-md transition-all duration-300 ${getShadowClass()}`} />;
+            })()}
           </div>
         </div>
         
@@ -221,13 +234,17 @@ export function CatalogInstrument({
           <p className={`text-[9px] tracking-[0.25em] uppercase font-light ${
             showEffects ? "text-amber-400/70" : "text-zinc-600"
           }`}>
-            {phase === "idle" ? "Browse Archive" : phase === "found" || phase === "opening" ? `Entry #${activeCardIndex + 1}` : "Indexing..."}
+            {(() => {
+              if (phase === "idle") return "Browse Archive";
+              if (phase === "found" || phase === "opening") return `Entry #${activeCardIndex + 1}`;
+              return "Indexing...";
+            })()}
           </p>
         </div>
         
         {/* Bottom accent line */}
         <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-px transition-all duration-500 ${
-          showEffects ? "w-16 bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" : "w-8 bg-gradient-to-r from-transparent via-zinc-700/30 to-transparent"
+          showEffects ? "w-16 bg-linear-to-r from-transparent via-amber-500/50 to-transparent" : "w-8 bg-linear-to-r from-transparent via-zinc-700/30 to-transparent"
         }`} />
       </div>
     </button>

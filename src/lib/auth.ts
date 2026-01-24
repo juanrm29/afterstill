@@ -24,15 +24,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
 
           // Create user if doesn't exist
-          if (!user) {
-            user = await prisma.user.create({
-              data: {
-                email: adminEmail!,
-                name: "Admin",
-                role: "ADMIN",
-              },
-            });
-          }
+          user ??= await prisma.user.create({
+            data: {
+              email: adminEmail!,
+              name: "Admin",
+              role: "ADMIN",
+            },
+          });
 
           return {
             id: user.id,

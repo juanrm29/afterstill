@@ -32,9 +32,5 @@ export default async function WritingsPage() {
     })
   );
 
-  const tags = await prisma.tag.findMany({
-    orderBy: { name: "asc" },
-  });
-
-  return <WritingsListClient writings={writingsWithTags} tags={tags} />;
+  return <WritingsListClient writings={writingsWithTags} />;
 }

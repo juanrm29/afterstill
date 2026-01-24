@@ -34,7 +34,7 @@ const DEFAULT_CONFIG: WhisperConfig = {
 export function createWhisperController(config: Partial<WhisperConfig> = {}) {
   const cfg = { ...DEFAULT_CONFIG, ...config };
   
-  let state: WhisperState = {
+  const state: WhisperState = {
     revealProgress: 0,
     lastAcceleration: 0,
     isWhispering: false,

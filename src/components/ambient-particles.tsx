@@ -15,10 +15,10 @@ interface Particle {
 }
 
 interface AmbientParticlesProps {
-  count?: number;
-  color?: "violet" | "cyan" | "amber" | "neutral";
-  intensity?: "subtle" | "medium" | "intense";
-  interactive?: boolean;
+  readonly count?: number;
+  readonly color?: "violet" | "cyan" | "amber" | "neutral";
+  readonly intensity?: "subtle" | "medium" | "intense";
+  readonly interactive?: boolean;
 }
 
 export function AmbientParticles({ 
@@ -106,12 +106,12 @@ export function AmbientParticles({
       }
     };
     
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    globalThis.addEventListener("mousemove", handleMouseMove, { passive: true });
+    globalThis.addEventListener("touchmove", handleTouchMove, { passive: true });
     
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("touchmove", handleTouchMove);
+      globalThis.removeEventListener("mousemove", handleMouseMove);
+      globalThis.removeEventListener("touchmove", handleTouchMove);
     };
   }, [interactive]);
   
@@ -124,7 +124,13 @@ export function AmbientParticles({
     if (!ctx) return;
     
     const config = colorConfig[color];
-    const iConfig = intensityConfig[intensity];
+    
+    // Helper function for life-based opacity calculation
+    const getLifeOpacity = (ratio: number): number => {
+      if (ratio < 0.1) return ratio * 10;
+      if (ratio > 0.9) return (1 - ratio) * 10;
+      return 1;
+    };
     
     const animate = () => {
       ctx.clearRect(0, 0, dimensions.width, dimensions.height);
@@ -140,17 +146,13 @@ export function AmbientParticles({
         
         // Calculate life-based opacity
         const lifeRatio = particle.life / particle.maxLife;
-        const lifeOpacity = lifeRatio < 0.1 
-          ? lifeRatio * 10 
-          : lifeRatio > 0.9 
-            ? (1 - lifeRatio) * 10 
-            : 1;
+        const lifeOpacity = getLifeOpacity(lifeRatio);
         
         // Mouse interaction
         if (interactive) {
           const dx = mouseRef.current.x - particle.x;
           const dy = mouseRef.current.y - particle.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          const dist = Math.hypot(dx, dy);
           
           if (dist < 150) {
             const force = (150 - dist) / 150;

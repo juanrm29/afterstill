@@ -58,8 +58,9 @@ export function ProceduralAmbientPlayer() {
   if (!isHydrated) return null;
   
   return (
-    <div 
-      className="fixed bottom-6 right-6 z-50"
+    <section
+      className="fixed bottom-6 right-20 z-50"
+      aria-label="Ambient controls"
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
     >
@@ -70,10 +71,10 @@ export function ProceduralAmbientPlayer() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-full right-0 mb-3 p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] backdrop-blur-xl"
+            className="absolute bottom-full right-0 mb-3 p-4 rounded-xl bg-(--card-bg) border border-(--card-border) backdrop-blur-xl"
             style={{ minWidth: "180px" }}
           >
-            <div className="text-xs text-[var(--fg-muted)] mb-3 tracking-wide">
+            <div className="text-xs text-(--fg-muted) mb-3 tracking-wide">
               Ambient Tones
             </div>
             
@@ -86,20 +87,20 @@ export function ProceduralAmbientPlayer() {
                 max="0.3"
                 step="0.01"
                 value={volume}
-                onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                className="flex-1 h-1 appearance-none bg-[var(--muted)] rounded-full cursor-pointer
+                onChange={(e) => handleVolumeChange(Number.parseFloat(e.target.value))}
+                className="flex-1 h-1 appearance-none bg-muted rounded-full cursor-pointer
                   [&::-webkit-slider-thumb]:appearance-none
                   [&::-webkit-slider-thumb]:w-3
                   [&::-webkit-slider-thumb]:h-3
                   [&::-webkit-slider-thumb]:rounded-full
-                  [&::-webkit-slider-thumb]:bg-[var(--fg)]
+                  [&::-webkit-slider-thumb]:bg-foreground
                   [&::-webkit-slider-thumb]:cursor-pointer"
               />
               <span className="text-xs opacity-50">●</span>
             </div>
             
             {/* Phase indicator */}
-            <div className="text-xs text-[var(--fg-muted)] opacity-60">
+            <div className="text-xs text-(--fg-muted) opacity-60">
               Tuned to {phase}
             </div>
           </motion.div>
@@ -115,8 +116,8 @@ export function ProceduralAmbientPlayer() {
           w-12 h-12 rounded-full flex items-center justify-center
           transition-all duration-300 backdrop-blur-xl
           ${isPlaying 
-            ? "bg-[var(--fg)]/10 border border-[var(--fg)]/20" 
-            : "bg-[var(--card-bg)] border border-[var(--card-border)]"
+            ? "bg-(--fg)/10 border border-(--fg)/20" 
+            : "bg-(--card-bg) border border-(--card-border)"
           }
         `}
         aria-label={isPlaying ? "Stop ambient sound" : "Play ambient sound"}
@@ -127,7 +128,7 @@ export function ProceduralAmbientPlayer() {
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
-                className="w-0.5 bg-[var(--fg)]"
+                className="w-0.5 bg-foreground"
                 animate={{
                   height: [8, 16, 8],
                 }}
@@ -149,13 +150,13 @@ export function ProceduralAmbientPlayer() {
             fill="none" 
             stroke="currentColor" 
             strokeWidth="1.5"
-            className="text-[var(--fg-muted)]"
+            className="text-(--fg-muted)"
           >
             <path d="M11 5L6 9H2v6h4l5 4V5z" />
             <path d="M23 9l-6 6M17 9l6 6" />
           </svg>
         )}
       </motion.button>
-    </div>
+    </section>
   );
 }

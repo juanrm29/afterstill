@@ -11,8 +11,8 @@ type Reflection = {
 };
 
 type Props = {
-  writingId: string;
-  writingTitle: string;
+  readonly writingId: string;
+  readonly writingTitle: string;
 };
 
 export function CollaborativeReflections({ writingId, writingTitle }: Props) {
@@ -137,7 +137,7 @@ export function CollaborativeReflections({ writingId, writingTitle }: Props) {
       
       {/* Content */}
       <div className={`overflow-hidden transition-all duration-500 ${
-        isExpanded ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
+        isExpanded ? "max-h-200 opacity-100" : "max-h-0 opacity-0"
       }`}>
         {/* Input form */}
         {!hasSubmitted && (

@@ -28,7 +28,7 @@ import {
 export function KeyboardRitualsProvider({
   children,
 }: {
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
 }) {
   const router = useRouter();
   

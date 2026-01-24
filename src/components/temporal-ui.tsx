@@ -57,7 +57,7 @@ export function TemporalWelcome() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center"
+          className="fixed inset-0 z-100 pointer-events-none flex items-center justify-center"
           style={{
             background: `radial-gradient(ellipse at center, ${temporal.colors.primary} 0%, transparent 70%)`,
           }}
@@ -75,7 +75,7 @@ export function TemporalWelcome() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
               transition={{ delay: 0.4 }}
-              className="text-xs tracking-[0.3em] uppercase text-[var(--fg-muted)] mb-4"
+              className="text-xs tracking-[0.3em] uppercase text-(--fg-muted) mb-4"
             >
               {formatPhase(temporal.phase)}
             </motion.div>
@@ -85,7 +85,7 @@ export function TemporalWelcome() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.8 }}
-              className="font-serif text-2xl md:text-3xl text-[var(--fg)] leading-relaxed"
+              className="font-serif text-2xl md:text-3xl text-foreground leading-relaxed"
               style={{ 
                 fontWeight: 300,
                 letterSpacing: "-0.02em",
@@ -99,7 +99,7 @@ export function TemporalWelcome() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.3 }}
               transition={{ delay: 1.5, duration: 1 }}
-              className="mt-8 text-xs text-[var(--fg-muted)]"
+              className="mt-8 text-xs text-(--fg-muted)"
             >
               {isReturning ? "continue your journey" : "tap anywhere to enter"}
             </motion.div>
@@ -123,12 +123,12 @@ export function TemporalGlow() {
   
   return (
     <div 
-      className="fixed inset-0 pointer-events-none z-0 transition-all duration-[5000ms] ease-out"
+      className="fixed inset-0 pointer-events-none z-0 transition-all duration-5000 ease-out"
       style={{ opacity: temporal.ambientIntensity * 0.5 }}
     >
       {/* Primary glow from bottom */}
       <div 
-        className="absolute inset-0 transition-all duration-[5000ms]"
+        className="absolute inset-0 transition-all duration-5000"
         style={{
           background: `radial-gradient(ellipse 150% 50% at 50% 100%, ${temporal.colors.primary} 0%, transparent 70%)`,
         }}
@@ -136,7 +136,7 @@ export function TemporalGlow() {
       
       {/* Secondary ambient from top corners */}
       <div 
-        className="absolute inset-0 transition-all duration-[5000ms]"
+        className="absolute inset-0 transition-all duration-5000"
         style={{
           background: `
             radial-gradient(ellipse 80% 40% at 0% 0%, ${temporal.colors.secondary} 0%, transparent 50%),
@@ -147,7 +147,7 @@ export function TemporalGlow() {
       
       {/* Center accent glow */}
       <div 
-        className="absolute inset-0 transition-all duration-[5000ms]"
+        className="absolute inset-0 transition-all duration-5000"
         style={{
           background: `radial-gradient(ellipse 60% 60% at 50% 50%, ${temporal.colors.glow} 0%, transparent 60%)`,
         }}
@@ -161,7 +161,7 @@ export function TemporalGlow() {
  * 
  * Shows current phase as a subtle badge in the corner.
  */
-export function TemporalIndicator({ className = "" }: { className?: string }) {
+export function TemporalIndicator({ className = "" }: { readonly className?: string }) {
   const { temporal, isHydrated } = useConsciousness();
   
   if (!isHydrated) return null;
@@ -178,7 +178,7 @@ export function TemporalIndicator({ className = "" }: { className?: string }) {
   return (
     <div 
       className={`
-        flex items-center gap-2 text-xs text-[var(--fg-muted)]
+        flex items-center gap-2 text-xs text-(--fg-muted)
         transition-all duration-1000
         ${className}
       `}

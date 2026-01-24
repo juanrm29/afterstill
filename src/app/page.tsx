@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { AmbientLandscape } from "@/components/ambient-landscape";
 import { BreathingGuide } from "@/components/breathing-guide";
-import { LivingTitle } from "@/components/living-title";
 import { triggerPortal } from "@/components/portal-transition";
 import { DeckReveal } from "@/components/deck-reveal";
 import { MainNavbar } from "@/components/main-navbar";
@@ -39,6 +38,54 @@ type OraclePhase = "idle" | "gazing" | "revealing" | "shown";
 type RadioPhase = "idle" | "scanning" | "locking" | "acquired" | "transmitting";
 type CatalogPhase = "idle" | "shuffling" | "sorting" | "found" | "opening";
 type CandlePhase = "idle" | "striking" | "lighting" | "glowing" | "illuminating";
+
+// Helper functions for card state classes
+function getPhaseClass(
+  isActive: boolean,
+  isHovered: boolean,
+  activeClass: string,
+  hoverClass: string,
+  defaultClass: string
+): string {
+  if (isActive) return activeClass;
+  if (isHovered) return hoverClass;
+  return defaultClass;
+}
+
+function getRadioBarClass(
+  phase: RadioPhase,
+  isHovered: boolean,
+  level: number
+): { className: string; height: string; boxShadow: string } {
+  const isAcquired = phase === "acquired";
+  const isActive = phase !== "idle";
+  
+  let className: string;
+  if (isAcquired) {
+    className = "bg-cyan-400/70";
+  } else if (isActive) {
+    className = "bg-cyan-500/40";
+  } else if (isHovered) {
+    className = "bg-zinc-600/40";
+  } else {
+    className = "bg-zinc-700/30";
+  }
+  
+  let heightMultiplier: number;
+  if (isActive) {
+    heightMultiplier = 100;
+  } else if (isHovered) {
+    heightMultiplier = 80;
+  } else {
+    heightMultiplier = 50;
+  }
+  
+  return {
+    className,
+    height: `${level * heightMultiplier}%`,
+    boxShadow: isAcquired ? `0 0 4px rgba(34,211,238,${level * 0.3})` : "none",
+  };
+}
 
 // Site settings type
 type SiteSettings = {
@@ -117,14 +164,15 @@ export default function HomePage() {
   
   // 3D tilt state
   const tiltRef = useRef({ oracle: { x: 0, y: 0 }, radio: { x: 0, y: 0 }, catalog: { x: 0, y: 0 }, candle: { x: 0, y: 0 } });
-  const [, forceUpdate] = useState(0);
+  const [tiltKey, setTiltKey] = useState(0);
+  const forceUpdate = useCallback(() => setTiltKey(prev => prev + 1), []);
   
   // Fetch site settings
   useEffect(() => {
     fetch("/api/settings")
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.id) {
+        if (data?.id) {
           // Merge with defaults for empty values
           setSettings(prev => ({
             ...prev,
@@ -428,8 +476,8 @@ export default function HomePage() {
 
     setCatalogPhase("sorting");
     const searchSequence = [0, 1, 4, 3, 1, 2, 4, 0, 3, 2];
-    for (let i = 0; i < searchSequence.length; i++) {
-      setActiveCardIndex(searchSequence[i]);
+    for (const cardIndex of searchSequence) {
+      setActiveCardIndex(cardIndex);
       await new Promise(r => setTimeout(r, 100));
     }
 
@@ -556,13 +604,13 @@ export default function HomePage() {
       x: ((y - centerY) / centerY) * -8,
       y: ((x - centerX) / centerX) * 8,
     };
-    forceUpdate(n => n + 1);
+    forceUpdate();
   };
   
-  const resetTilt = (card: "oracle" | "radio" | "catalog" | "candle") => {
+  const resetTilt = useCallback((card: "oracle" | "radio" | "catalog" | "candle") => {
     tiltRef.current[card] = { x: 0, y: 0 };
-    forceUpdate(n => n + 1);
-  };
+    forceUpdate();
+  }, [forceUpdate]);
 
   return (
     <div className="min-h-screen text-foreground relative overflow-hidden safe-area-inset">
@@ -583,7 +631,7 @@ export default function HomePage() {
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {/* Primary nebula - indigo */}
         <div 
-          className="absolute w-[900px] h-[900px] rounded-full blur-[150px] opacity-[0.04]"
+          className="absolute w-225 h-225 rounded-full blur-[150px] opacity-[0.04]"
           style={{
             background: 'radial-gradient(circle, #6366f1, transparent 70%)',
             left: '5%',
@@ -593,7 +641,7 @@ export default function HomePage() {
         />
         {/* Secondary nebula - cyan */}
         <div 
-          className="absolute w-[700px] h-[700px] rounded-full blur-[120px] opacity-[0.035]"
+          className="absolute w-175 h-175 rounded-full blur-[120px] opacity-[0.035]"
           style={{
             background: 'radial-gradient(circle, #06b6d4, transparent 70%)',
             right: '10%',
@@ -603,7 +651,7 @@ export default function HomePage() {
         />
         {/* Tertiary nebula - purple */}
         <div 
-          className="absolute w-[600px] h-[600px] rounded-full blur-[100px] opacity-[0.03]"
+          className="absolute w-150 h-150 rounded-full blur-[100px] opacity-[0.03]"
           style={{
             background: 'radial-gradient(circle, #a855f7, transparent 70%)',
             left: '40%',
@@ -614,7 +662,7 @@ export default function HomePage() {
         />
         {/* Accent nebula - rose */}
         <div 
-          className="absolute w-[500px] h-[500px] rounded-full blur-[80px] opacity-[0.025]"
+          className="absolute w-125 h-125 rounded-full blur-[80px] opacity-[0.025]"
           style={{
             background: 'radial-gradient(circle, #f43f5e, transparent 70%)',
             right: '25%',
@@ -688,11 +736,11 @@ export default function HomePage() {
             
             {/* Subtle top accent */}
             <div className="flex items-center justify-center gap-4 mb-8">
-              <span className="w-12 h-px bg-gradient-to-r from-transparent to-zinc-700/40" />
+              <span className="w-12 h-px bg-linear-to-r from-transparent to-zinc-700/40" />
               <span className="text-[9px] tracking-[0.5em] uppercase text-zinc-600/80 font-light">
                 {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </span>
-              <span className="w-12 h-px bg-gradient-to-l from-transparent to-zinc-700/40" />
+              <span className="w-12 h-px bg-linear-to-l from-transparent to-zinc-700/40" />
             </div>
             
             {/* Main Title - Parallax Depth + Aurora Text */}
@@ -795,7 +843,7 @@ export default function HomePage() {
             
             {/* Minimal divider */}
             <div className="mt-12 flex items-center justify-center">
-              <div className="w-px h-16 bg-gradient-to-b from-zinc-700/50 via-zinc-700/20 to-transparent" />
+              <div className="w-px h-16 bg-linear-to-b from-zinc-700/50 via-zinc-700/20 to-transparent" />
             </div>
             
             {/* Whisper Quote - Floating wisdom */}
@@ -1381,6 +1429,33 @@ export default function HomePage() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════
+            SECTION: ECHO FRAGMENTS
+            Fading text fragments from writings
+        ═══════════════════════════════════════════════════════════════ */}
+        {echoFragments.length > 0 && (
+        <section className="relative py-16 overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[200px] rounded-full bg-violet-500/3 blur-3xl" />
+          </div>
+          
+          <div className="relative max-w-2xl mx-auto px-8 text-center">
+            <p className="text-[9px] tracking-[0.5em] uppercase text-zinc-800 mb-6">
+              Echo
+            </p>
+            <p 
+              className="text-sm text-zinc-600/70 italic transition-opacity duration-500"
+              style={{ 
+                fontFamily: "var(--font-cormorant), serif",
+                opacity: echoOpacity,
+              }}
+            >
+              {echoFragments[echoIndex] || ""}
+            </p>
+          </div>
+        </section>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════
             SECTION 2: MOOD-BASED RECOMMENDATION
             Daily reading recommendation based on time and mood
         ═══════════════════════════════════════════════════════════════ */}
@@ -1594,6 +1669,13 @@ export default function HomePage() {
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
                       <span className="text-sm tracking-wide">Conjuring inspiration...</span>
+                    </div>
+                  ) : promptError ? (
+                    <div className="flex flex-col items-center gap-2 text-rose-500/70">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                      </svg>
+                      <span className="text-sm tracking-wide">{promptError}</span>
                     </div>
                   ) : (
                     <p 

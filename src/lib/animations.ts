@@ -139,9 +139,9 @@ export const revealText = {
  * Liquid cursor follow effect
  */
 export class LiquidCursor {
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-  private points: Array<{ x: number; y: number; vx: number; vy: number }> = [];
+  private readonly canvas: HTMLCanvasElement;
+  private readonly ctx: CanvasRenderingContext2D;
+  private readonly points: Array<{ x: number; y: number; vx: number; vy: number }> = [];
   private mouse = { x: 0, y: 0 };
   private animationId: number | null = null;
 

@@ -46,8 +46,8 @@ export async function PUT(
 
     const slug = name
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+      .replaceAll(/[^a-z0-9]+/g, "-")
+      .replaceAll(/(?:^-|-$)/g, "");
 
     const tag = await prisma.tag.update({
       where: { id },
